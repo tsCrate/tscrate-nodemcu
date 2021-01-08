@@ -1,0 +1,5 @@
+node.compile("server.lua")
+node.compile("serverUtil.lua")
+node.compile("sensorReader.lua")
+node.compile("sensiveClient.lua")
+node.compile("standalone.lua")

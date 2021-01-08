@@ -1,0 +1,112 @@
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Offline Setup</title>
+</head>
+
+<body>
+<div class="login-page">
+    <div class="form">
+        <img src="logo.jpg">
+        <br>
+        <span><u><b>Recording Interval</b></u></span><br><br>
+        <input id="intervalInput" type="number" placeholder="Minutes between readings"/>
+        <span><u><b>Power</b></u></span><br><br>
+        <select id="powerInput" name="powerInput">
+        <option value="awake">Always Awake</option>
+        <option value="sleep">Sleep</option>
+      </select>
+      <br><br>
+    <span><u><b>Memory</b></u></span><br><br>
+        <select  id="memoryInput" name="memoryInput">
+        <option value="stop">Stop</option>
+        <option value="overwrite">Overwrite</option>
+      </select>
+      <br><br>
+      <button id="saveSettings">Save Settings</button>
+      <br><br>
+      <button id="downloadCSV">Download CSV</button>
+	  <span id="savingState" style="font-size: 1.5em"></span>
+    </div>
+</div>
+
+<script>
+(function() {
+
+  var checkInterval = 2000;
+  var statusUpdateTimer = setInterval(checkNetworkStatus, checkInterval);
+  var savingState = '';
+  var inputXhr;
+  var statusXhr;
+  document.getElementById("saveSettings").onclick = function() { makeRequest("offline"); document.getElementById("savingState").textContent = "Saving";};
+
+  document.getElementById("downloadCSV").onclick = function() {
+      var link = document.createElement("a");
+      link.download = "offlineRecordings.csv";
+      link.href = "./offlineRecordings.csv";
+      link.click();
+    };
+
+  function updateStatus() {
+    if (statusXhr.readyState === XMLHttpRequest.DONE) {
+      if (statusXhr.status === 200) {
+        console.log(statusXhr.responseText);
+        var msgObj = JSON.parse(statusXhr.responseText);
+        document.getElementById("savingState").textContent = msgObj.saveStatus;
+      }
+    }
+  }
+
+  function checkNetworkStatus() {
+    statusXhr = new XMLHttpRequest();
+    statusXhr.onreadystatechange = updateStatus;
+    statusXhr.open("POST", "ajaxReq");
+    statusXhr.timeout = 1000;
+    let msgObj = new Object();
+    msgObj.msgType = 'statusRequest';
+    statusXhr.send(JSON.stringify(msgObj) + "\r\n\r\n");
+
+  }
+
+  // TODO update some other field for replies to input
+  function handleReponse() {
+    if (inputXhr.readyState === XMLHttpRequest.DONE) {
+      if (inputXhr.status === 200) {
+        document.getElementById("saveStatus").textContent = 'Saving...';
+      } else {
+        alert("Ajax HTTP status:" + inputXhr.status + " " + inputXhr.responseText + "Settings Saved");
+      }
+    }
+  }
+
+
+  // send server or wifi data
+  function makeRequest(msgType) {
+    inputXhr = new XMLHttpRequest();
+    if (!inputXhr) {
+      alert("Unable to create XMLHTTP instance");
+      return false;
+    }
+
+    inputXhr.onreadystatechange = handleReponse;
+    inputXhr.open("POST", "ajaxReq");
+
+    let msgObj = new Object();
+    msgObj.msgType = msgType;
+    if (msgType == "offline") {
+        msgObj.interval = document.getElementById("intervalInput").value;
+        msgObj.power = document.getElementById("powerInput").value;
+        msgObj.memory = document.getElementById("memoryInput").value;
+
+        var d = new Date().getTime();
+        msgObj.time = d
+        inputXhr.send(JSON.stringify(msgObj) + "\r\n\r\n");
+    }
+  }
+
+})();
+</script>
+
+</body>
+</html>
