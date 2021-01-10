@@ -1,0 +1,56 @@
+html {
+    font-family: "Open Sans", sans-serif;
+}
+
+@media (min-height: 300px) {
+    .header {
+        height: 100px;
+    }
+}
+
+@media (min-height: 300px) {
+    body {
+        font-size: 1.1em;
+    }
+}
+
+.header {
+    text-align: center;
+}
+
+p {
+    text-align: center;
+}
+
+input {
+    font-size: 1.0em;
+}
+
+button {
+    -webkit-border-radius: 11;
+    -moz-border-radius: 11;
+    border-radius: 11px;
+    border: none;
+    font-size: 1.0em;
+    color: #000000;
+    background: #4ce65b;
+    padding: 10px 20px 10px 20px;
+}
+
+button:hover {
+    background: #49d655;
+}
+
+.centerLine {
+    display: block;
+    margin: auto;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+@media (min-height: 300px) {
+    .centerLine {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+}
