@@ -1,5 +1,0 @@
-file.remove("server.lc")
-file.remove("serverUtil.lc")
-file.remove("sensorReader.lc")
-file.remove("sensiveClient.lc")
-file.remove("standalone.lc")
