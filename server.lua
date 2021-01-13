@@ -23,7 +23,7 @@ local clients = {}
 -- moduleId, passphrase, etc.
 local moduleSettings = {}
 -- status of server connection
-local serverConnStatus = "No connection"
+local status = "Idle"
 
 local util = require("serverUtil")
 
@@ -63,9 +63,25 @@ local function get404(sock)
 end
 
 
+local wifiStates = {
+    [wifi.STA_IDLE] = 'WiFi Idle',
+    [wifi.STA_CONNECTING] = "Connecting to WiFi: ",
+    [wifi.STA_WRONGPWD] = "Wrong WiFi Password for: ",
+    [wifi.STA_APNOTFOUND] = "Didn't find WiFi: ",
+    [wifi.STA_FAIL] = "WiFi failed: ",
+    [wifi.STA_GOTIP] = "WiFi connected: "
+}
+
+local function getStatusMsg ()
+    local wifiCode = wifi.sta.status()
+    local ssid = wifi.sta.getconfig()
+    return wifiStates[wifiCode] .. (wifiCode ~= wifi.STA_IDLE and ssid or '')
+end
+
+
 local function getStatus(sock)
     sock:on("sent", function(s) closeClient(s) end)
-    sock:send("HTTP/1.0 200 OK\r\n\r\n status sample" .. math.random(1, 100))
+    sock:send("HTTP/1.0 200 OK\r\n\r\n" .. getStatusMsg())
 end
 
 
@@ -80,9 +96,27 @@ local function serveFile(sock, resource)
 end
 
 
+local function postWifiConnect(sock)
+    local reqBody = util.getBody(clients[sock].rcvBuf)
+    -- if body not nil, handle and cleanup
+    if reqBody then
+        local reqVals = util.decodeJson(reqBody)
+        local station_cfg = {}
+        station_cfg.ssid = reqVals.ssid
+        station_cfg.pwd = reqVals.pwd
+        -- TODO: save config to flash
+        station_cfg.save = false
+        wifi.sta.config(station_cfg)
+    -- else wait for the rest of the body
+    else
+    end
+end
+
+
 -- request controllers
 local controllers = {
   ['check-status'] = getStatus,
+  ['wifi-connect'] = postWifiConnect,
   [''] = function (sock) serveFile(sock, 'index.html') end
 }
 

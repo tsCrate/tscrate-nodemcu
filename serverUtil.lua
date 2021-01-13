@@ -43,6 +43,23 @@ local function parseServerMsg(serverMsg)
     return serverMsg, decodeJson(msg)
 end
 
+-- Get body from an HTTP message
+local function getBody(req)
+    local i, j = string.find(req, '\r\n\r\n')
+
+    if i then
+        local body = req:sub(j+1)
+        local _, _, contLen = req:find('Content%-Length:(.-)\r\n')
+        if body:len() >= tonumber(contLen) then
+            return body
+        else
+            return nil
+        end
+    else
+        return nil
+    end
+end
+
 -- extract json from a client's receive buffer
 local function extractTable(clients, sock)
     -- check for delimiters
@@ -63,6 +80,8 @@ end
 return {
     parseResource = parseResource,
     extractTable = extractTable,
+    getBody = getBody,
     parseServerMsg = parseServerMsg,
-    encodeJson = encodeJson
+    encodeJson = encodeJson,
+    decodeJson = decodeJson
 }

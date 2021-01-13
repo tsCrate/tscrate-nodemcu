@@ -25,15 +25,18 @@
 
   <script>
     // check status for server and wifi
-    var checkInterval = 1500;
-    var statusUpdateTimer = setInterval(checkStatus, checkInterval);
+    var checkInterval = 1000;
+    checkStatus();
 
     async function checkStatus() {
       fetch('/check-status', {
         method: 'GET',
       })
         .then(handleResponse)
-        .catch(handleError);
+        .catch(handleError)
+        .finally(setTimeout(() => {
+          checkStatus();
+        }, checkInterval));
     }
 
     async function connectWifi() {
