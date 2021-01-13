@@ -99,7 +99,6 @@ local function handleReceive(sock, data)
         local endpoint = util.parseResource(clients[sock].rcvBuf)
         print('endpoint: ' .. endpoint)
 
-        -- NEW CODE
         if file.exists(endpoint) then
             serveFile(sock, endpoint)
         elseif controllers[endpoint] ~= nil then
@@ -131,7 +130,7 @@ function createSetupServer()
     -- configure wifi
     wifi.eventmon.register(wifi.eventmon.AP_STADISCONNECTED, function() print("Dropped AP client") end)
     wifi.setmode(wifi.STATIONAP, false);
-    wifi.ap.config({ssid="Sensive".. tostring(node.chipid()), pwd="12345678", auth=wifi.WPA2_PSK, save=false, beacon=100})
+    wifi.ap.config({ssid="DA".. tostring(node.chipid()), pwd="data app", auth=wifi.WPA2_PSK, save=false, beacon=100})
     wifi.ap.dhcp.start()
     return srv
 end
