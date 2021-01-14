@@ -131,7 +131,6 @@ local function handleReceive(sock, data)
     if k then
         -- parse endpoint
         local endpoint = util.parseResource(clients[sock].rcvBuf)
-        print('endpoint: ' .. endpoint)
 
         if file.exists(endpoint) then
             serveFile(sock, endpoint)
