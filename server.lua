@@ -123,6 +123,10 @@ local controllers = {
 
 -- handle data received from AP client
 local function handleReceive(sock, data)
+    if not clients[sock] then
+        return nil
+    end
+
     -- buffer request
     clients[sock].rcvBuf = clients[sock].rcvBuf .. data
     -- check for at least one \r\n\r\n
