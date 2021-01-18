@@ -5,7 +5,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Data App</title>
-  <link href="style.css" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="stylesheet" type="text/css" href="dialog-polyfill.css">
 </head>
 
 <body>
@@ -19,14 +20,40 @@
 
   <input placeholder="Name (SSID)" id="ssid" class="centerLine">
   <input type="password" id="password" placeholder="Password" class="centerLine">
-  <button onclick="connectWifi(); this.blur();" type="button" class="centerLine">Connect</button>
+  <button onclick="connectWifi(); this.blur();" class="centerLine">Connect</button>
+  <button onclick="openSetupDialog(); this.blur();" class="centerLine">Request Setup</button>
+
+
+  <dialog id="requestSetupDialog">
+    This will replace any existing setup
+    <button onclick="closeDialog()">Cancel</button>
+    <button onclick="confirmRequestSetup()">Confirm</button>
+  </dialog>
 
   <p id="status"></p>
 
+
+  <script src="dialog-polyfill.js"></script>
   <script>
     // check status for server and wifi
-    var checkInterval = 1000;
+    let checkInterval = 1000;
+    let confirmRequestDialog = document.getElementById('requestSetupDialog');
+    dialogPolyfill.registerDialog(confirmRequestDialog);
+
     checkStatus();
+
+    function openSetupDialog() {
+      confirmRequestDialog.showModal();
+    }
+
+    function confirmRequestSetup() {
+      confirmRequestDialog.close();
+    }
+
+    function closeDialog() {
+      confirmRequestDialog.close();
+    }
+
 
     async function checkStatus() {
       fetch('/check-status', {
@@ -42,18 +69,17 @@
     async function connectWifi() {
       let ssid = document.getElementById("ssid").value;
       let pwd = document.getElementById("password").value;
-      const errorMsg =
 
-        // Default options are marked with *
-        fetch('/wifi-connect', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ ssid: ssid, pwd: pwd })
-        })
-          .then(handleResponse)
-          .catch(handleError);
+      // Default options are marked with *
+      fetch('/wifi-connect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ ssid: ssid, pwd: pwd })
+      })
+        .then(handleResponse)
+        .catch(handleError);
     };
 
     async function handleResponse(response) {
@@ -65,7 +91,7 @@
     }
 
     function handleError(err) {
-      document.getElementById("status").textContent = 'Not connected to device'
+      document.getElementById("status").textContent = 'Not connected to device';
     }
 
   </script>

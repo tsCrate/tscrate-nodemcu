@@ -1,24 +1,30 @@
-function loadSetup()
-    if file.open('setup', 'r') then
-        local setupString = file.readline()
-        file.close()
-        return util.decodeJson(setupString)
-    else
-        return nil
-    end
+local util = require("serverUtil")
+
+local STATE = {
+    NO_CODE = 0,
+    UNCONFIRMED_CODE = 1,
+    CONFIRMED_CODE = 2
+}
+
+local statusTimer = tmr.create()
+
+local function setupConfirmed ()
 end
 
-function handleStatus(statusString)
-        print (statusString)
-        if statusString == 'success' then
+local function handleStatus(data)
+        print (data)
+        local status = util.decodeJson(data)
+        if status.complete == true then
+            setupConfirmed()
             statusTimer:unregister()
         else
             statusTimer:start()
         end
 end
 
-function getStatus()
-    local setup = loadSetup()
+local function getStatus()
+    local setup = util.loadSetup()
+    if not setup.code then return end
 
     http.get(
         "https://192.168.1.7:5001/RemoteDevices/get-status",
@@ -35,31 +41,31 @@ function getStatus()
     )
 end
 
-function startStatusChecks()
+local function startStatusChecks()
+    statusTimer:unregister()
     statusTimer:register(3500, tmr.ALARM_SEMI, getStatus)
 end
 
-function handleSetupCode(setupString)
+local function handleSetupCode(setupString)
     local setup = util.decodeJson(setupString)
-    setup.complete = false
     setupString = util.encodeJson(setup)
 
     local fd = file.open('setup', 'w+')
     fd:writeline(setupString)
     fd:close()
 
+    SetupState = STATE.UNCONFIRMED_CODE
     startStatusChecks()
 end
 
-function requestSetup()
+local function requestSetup()
     http.get(
         "https://192.168.1.7:5001/RemoteDevices/get-setup-code",
         nil,
         function(code, data)
             if (code < 0) then
-                -- TODO: set status
+                -- TODO: notify client of failed request
                 print("Setup request failed")
-                requestSetup(handleSetupCode)
             else
                 print(code, data)
                 handleSetupCode(data)
@@ -68,3 +74,7 @@ function requestSetup()
     )
 end
 
+return {
+    requestSetup = requestSetup,
+    startStatusChecks = startStatusChecks
+}

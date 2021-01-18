@@ -1,22 +1,4 @@
--- make globals available to this module
-----------------------------------------------------------------------
-local M = {}
-do
-    local globaltbl = _G
-    local newenv = setmetatable({}, {
-        __index = function (t, k)
-            local v = M[k]
-            if v == nil then return globaltbl[k] end
-            return v
-        end,
-        __newindex = M,
-    })
-    if setfenv then
-        setfenv(1, newenv) -- for 5.1
-    else
-        _ENV = newenv -- for 5.2
-    end
-end
+local setupUtil = require('setupUtil')
 
 -- web clients connected to the AP
 local clients = {}
@@ -79,7 +61,7 @@ local function getStatusMsg ()
 end
 
 
-local function getStatus(sock)
+local function getDeviceStatus(sock)
     sock:on("sent", function(s) closeClient(s) end)
     sock:send("HTTP/1.0 200 OK\r\n\r\n" .. getStatusMsg())
 end
@@ -92,7 +74,13 @@ local function serveFile(sock, resource)
         return
     end
     sock:on("sent", function(s) sendFile(s) end)
-    sock:send("HTTP/1.0 200 OK\r\n\r\n")
+
+    local contEnc = ''
+    local fileExt = util.getFileExt(resource)
+    if fileExt == '.gz' then contEnc = '\r\nContent-Encoding: gzip' end
+    local contType = ''
+    if fileExt == '.css' then contType = '\r\nContent-Type: text/css' end
+    sock:send('HTTP/1.0 200 OK' .. contType .. contEnc .. '\r\n\r\n')
 end
 
 
@@ -115,8 +103,9 @@ end
 
 -- request controllers
 local controllers = {
-  ['check-status'] = getStatus,
+  ['check-status'] = getDeviceStatus,
   ['wifi-connect'] = postWifiConnect,
+  ['get-setup-code'] = setupUtil.requestSetup,
   [''] = function (sock) serveFile(sock, 'index.html') end
 }
 
@@ -135,11 +124,12 @@ local function handleReceive(sock, data)
     if k then
         -- parse endpoint
         local endpoint = util.parseResource(clients[sock].rcvBuf)
+        local fileName = util.getFileName(endpoint)
 
-        if file.exists(endpoint) then
-            serveFile(sock, endpoint)
-        elseif controllers[endpoint] ~= nil then
+        if controllers[endpoint] ~= nil then
             controllers[endpoint](sock)
+        elseif fileName then
+            serveFile(sock, fileName)
         else
             get404(sock)
         end
@@ -160,7 +150,13 @@ end
 
 
 -- setup server and enter AP mode
-function createSetupServer()
+local function startServer()
+    local setup = util.loadSetup()
+    -- code, no confirm; status checks
+    if setup.code and setup.confirmed == false then
+        setupUtil.startStatusChecks()
+    end
+
     local srv=net.createServer(net.TCP)
     srv:listen(80, handleConn)
 
@@ -172,5 +168,4 @@ function createSetupServer()
     return srv
 end
 
-
-return M
+startServer()

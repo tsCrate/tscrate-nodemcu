@@ -77,11 +77,45 @@ local function extractTable(clients, sock)
     return nil
 end
 
+
+local function loadSetup()
+    if file.open('setup', 'r') then
+        local setupString = file.readline()
+        file.close()
+        return util.decodeJson(setupString)
+    else
+        return {
+            code = nil,
+            aesKey = nil,
+            confirmed = false
+        }
+    end
+end
+
+
+local function getFileExt(name)
+    return name:match('%.[^.]-$')
+end
+
+
+-- Param: name - name of a file (.html, .css, .js, .png) that may be stored as .gz
+-- Return the name of a gz or .* file matching the give name
+local function getFileName(name)
+    local files = file.list()
+
+    return (files[name] and name)
+        or (files[name .. '.gz'] and name .. '.gz')
+end
+
+
 return {
     parseResource = parseResource,
     extractTable = extractTable,
     getBody = getBody,
     parseServerMsg = parseServerMsg,
     encodeJson = encodeJson,
-    decodeJson = decodeJson
+    decodeJson = decodeJson,
+    loadSetup = loadSetup,
+    getFileExt = getFileExt,
+    getFileName = getFileName
 }
