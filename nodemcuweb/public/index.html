@@ -25,30 +25,40 @@
 
 
   <dialog id="requestSetupDialog">
-    This will replace any existing setup
-    <button onclick="closeDialog()">Cancel</button>
-    <button onclick="confirmRequestSetup()">Confirm</button>
+    <div class="centerLine">This will replace any existing setup</div>
+    <button onclick="closeDialog()" class="centerLine" id="cancelButton">Cancel</button>
+    <button onclick="confirmRequestSetup()" class="centerLine">Confirm</button>
   </dialog>
 
   <p id="status"></p>
 
-
+<!-------------------------------- Scripts -------------------------------->
   <script src="dialog-polyfill.js"></script>
   <script>
     // check status for server and wifi
     let checkInterval = 1000;
     let confirmRequestDialog = document.getElementById('requestSetupDialog');
+    let cancelButton = document.getElementById('cancelButton');
     dialogPolyfill.registerDialog(confirmRequestDialog);
 
     checkStatus();
 
     function openSetupDialog() {
       confirmRequestDialog.showModal();
+      cancelButton.blur();
     }
 
     function confirmRequestSetup() {
       confirmRequestDialog.close();
+      fetch('get-setup-code', {
+        method: 'POST',
+      })
+        .catch(handleError)
+        .finally(setTimeout(() => {
+          checkStatus();
+        }, checkInterval));
     }
+
 
     function closeDialog() {
       confirmRequestDialog.close();
@@ -59,12 +69,13 @@
       fetch('/check-status', {
         method: 'GET',
       })
-        .then(handleResponse)
+        .then(handleStatusReponse)
         .catch(handleError)
         .finally(setTimeout(() => {
           checkStatus();
         }, checkInterval));
     }
+
 
     async function connectWifi() {
       let ssid = document.getElementById("ssid").value;
@@ -78,16 +89,11 @@
         },
         body: JSON.stringify({ ssid: ssid, pwd: pwd })
       })
-        .then(handleResponse)
         .catch(handleError);
     };
 
-    async function handleResponse(response) {
-      let responseText = await response.text();
-      let status = response.status === 200
-        ? responseText
-        : 'Communication error. Reset device';
-      document.getElementById("status").textContent = status;
+    async function handleStatusReponse(response) {
+      document.getElementById("status").textContent = await response.text();
     }
 
     function handleError(err) {

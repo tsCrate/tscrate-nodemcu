@@ -1,3 +1,4 @@
+SetupRequestFailed = false
 local setupUtil = require('setupUtil')
 
 -- web clients connected to the AP
@@ -45,6 +46,13 @@ local function get404(sock)
 end
 
 
+local function get200(sock, msg)
+    msg = msg or ''
+    sock:on("sent", function(s) closeClient(s) end)
+    sock:send("HTTP/1.0 200 OK Found\r\n\r\n" .. msg)
+end
+
+
 local wifiStates = {
     [wifi.STA_IDLE] = 'WiFi Idle',
     [wifi.STA_CONNECTING] = "Connecting to WiFi: ",
@@ -57,7 +65,22 @@ local wifiStates = {
 local function getStatusMsg ()
     local wifiCode = wifi.sta.status()
     local ssid = wifi.sta.getconfig()
-    return wifiStates[wifiCode] .. (wifiCode ~= wifi.STA_IDLE and ssid or '')
+    local wifiMsg = wifiStates[wifiCode] .. ((wifiCode ~= wifi.STA_IDLE and ssid) or '')
+
+    local setup = util.loadSetup()
+    local setupMsg = ''
+
+    if setup.code and (not setup.confirmed) then
+        setupMsg = setupMsg .. '\r\nCode to enter at DataApp.com: ' .. setup.code
+    elseif setup.confirmed then
+        setupMsg = setupMsg .. '\r\nDevice linked to an account at DataApp.com'
+    end
+
+    if SetupRequestFailed then
+        setupMsg = setupMsg .. '\r\nSetup request failed'
+    end
+
+    return wifiMsg .. '\r\n' .. setupMsg
 end
 
 
@@ -95,9 +118,24 @@ local function postWifiConnect(sock)
         -- TODO: save config to flash
         station_cfg.save = false
         wifi.sta.config(station_cfg)
+
+        get200(sock)
     -- else wait for the rest of the body
     else
     end
+end
+
+
+local function getSetupCode(sock)
+    setupUtil.requestSetup(function (code, data)
+        print(code, data)
+        get200(sock)
+        if (code < 0) then
+            SetupRequestFailed = true
+        else
+            SetupRequestFailed = false
+        end
+    end)
 end
 
 
@@ -105,7 +143,7 @@ end
 local controllers = {
   ['check-status'] = getDeviceStatus,
   ['wifi-connect'] = postWifiConnect,
-  ['get-setup-code'] = setupUtil.requestSetup,
+  ['get-setup-code'] = getSetupCode,
   [''] = function (sock) serveFile(sock, 'index.html') end
 }
 

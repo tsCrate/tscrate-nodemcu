@@ -12,6 +12,10 @@ app.post('/wifi-connect', (req, res) => {
   res.send('Sent connection settings');
 })
 
+app.post('/get-setup-code', (req, res) => {
+  res.send('Setup code requested');
+})
+
 app.get('/check-status', (req, res) => {
   res.send('Status update ' + Math.floor(Math.random() * Math.floor(100)));
 })
