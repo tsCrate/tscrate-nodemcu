@@ -2,6 +2,7 @@ local util = require("serverUtil")
 
 local statusTimer = tmr.create()
 
+
 local function setupConfirmed ()
     print('setup confirmed')
     node.restart()
@@ -10,11 +11,11 @@ end
 
 local function handleStatus(data)
     print (data)
-    local setup = util.decodeJson(data)
-    if setup.confirmed == true then
-        setupConfirmed()
-        -- TODO: write key for recording data
+    local status = util.decodeJson(data)
+    if status.confirmed == true then
+        -- TODO: write key for recording data and ACK receipt
         statusTimer:unregister()
+        setupConfirmed()
     else
         statusTimer:start()
     end

@@ -68,9 +68,6 @@ local function extractTable(clients, sock)
         local i, j = string.find(clients[sock].rcvBuf, "\r\n\r\n")
         local encJson = string.sub(clients[sock].rcvBuf, j+1, k)
         clients[sock].rcvBuf = ""
-        --print("heap: "..node.heap()/1000)
-        --print("gc: "..collectgarbage("count"))
-        --print("clients: "..tablelength(clients))
         return decodeJson(encJson)
     end
     -- else return nil

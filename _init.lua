@@ -94,5 +94,3 @@ end
 
 -- Lua's dofile (luaB_dofile) reaches directly for luaL_loadfile; shim instead
 G.dofile = function(n) return assert(loadfile(n))() end
-
-print("_init complete")

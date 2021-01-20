@@ -1,13 +1,15 @@
 local util = require('serverUtil')
 
+-- reset flag filename
+local resetFlag = 'resetFlag'
+
 local function writeResetFlag()
     file.open(resetFlag, "w+")
     file.close()
-    
+
     local delFlagTmr = tmr.create()
     delFlagTmr:register(5000, tmr.ALARM_SINGLE, function()
-        print("deleting setup trigger")
-        file.remove("setupTrigger")
+        file.remove(resetFlag)
     end)
     delFlagTmr:start()
 end
@@ -24,13 +26,10 @@ local function registerFlagHandler()
         flagDelTmr.start()
         -- second, to cancel the timer if a user connects within 3 mins
         wifi.eventmon.register(wifi.eventmon.AP_STACONNECTED, function ()
-            print('AP client connected')
             flagDelTmr:unregister()
         end)
 end
 
--- reset flag filename
-local resetFlag = 'resetFlag'
 
 local externalReset = 6
 local resetRaw, resetExtended = node.bootreason()
@@ -48,9 +47,9 @@ if setup.confirmed then
         -- TODO: start client
         print('start client')
     else
-        LFS.server()
+        LFS.startServer()
         registerFlagHandler()
     end
 else
-    LFS.server()
+    LFS.startServer()
 end

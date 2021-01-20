@@ -7,4 +7,4 @@ end
 
 -- make LFS easier to access
 node.LFS.get('_init')()
-node.LFS.startUp()
+node.LFS.startup()

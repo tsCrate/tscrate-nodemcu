@@ -195,13 +195,12 @@ local function startServer()
         setupUtil.startStatusChecks()
     end
 
-    local srv=net.createServer(net.TCP)
+    local srv = net.createServer(net.TCP)
     srv:listen(80, handleConn)
 
     -- configure wifi
-    wifi.eventmon.register(wifi.eventmon.AP_STADISCONNECTED, function() print("Dropped AP client") end)
     wifi.setmode(wifi.STATIONAP, false);
-    wifi.ap.config({ssid="DA".. tostring(node.chipid()), pwd="data app", auth=wifi.WPA2_PSK, save=false, beacon=100})
+    wifi.ap.config({ssid="DA".. tostring(node.chipid()), pwd="data app", auth=wifi.WPA2_PSK, save=false})
     wifi.ap.dhcp.start()
     return srv
 end
