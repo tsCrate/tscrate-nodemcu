@@ -54,9 +54,6 @@
         method: 'POST',
       })
         .catch(handleError)
-        .finally(setTimeout(() => {
-          checkStatus();
-        }, checkInterval));
     }
 
 
@@ -71,6 +68,7 @@
       })
         .then(handleStatusReponse)
         .catch(handleError)
+        // TODO: limit status checks to 1 pending; currently allows a backlog to build up; 1000 fail, 1000 set timeouts
         .finally(setTimeout(() => {
           checkStatus();
         }, checkInterval));

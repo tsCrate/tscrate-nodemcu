@@ -70,8 +70,8 @@ local function getStatusMsg ()
     local setup = util.loadSetup()
     local setupMsg = ''
 
-    if setup.code and (not setup.confirmed) then
-        setupMsg = setupMsg .. '\r\nCode to enter at DataApp.com: ' .. setup.code
+    if setup.setupCode and (not setup.confirmed) then
+        setupMsg = setupMsg .. '\r\nCode to enter at DataApp.com: ' .. setup.setupCode
     elseif setup.confirmed then
         setupMsg = setupMsg .. '\r\nDevice linked to an account at DataApp.com'
     end
@@ -190,8 +190,8 @@ end
 -- setup server and enter AP mode
 local function startServer()
     local setup = util.loadSetup()
-    -- code, no confirm; status checks
-    if setup.code and setup.confirmed == false then
+    -- setupCode, no confirm; status checks
+    if setup.setupCode and setup.confirmed == false then
         setupUtil.startStatusChecks()
     end
 

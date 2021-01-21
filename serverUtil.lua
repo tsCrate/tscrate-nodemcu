@@ -79,10 +79,10 @@ local function loadSetup()
     if file.open('setup', 'r') then
         local setupString = file.readline()
         file.close()
-        return util.decodeJson(setupString)
+        return decodeJson(setupString)
     else
         return {
-            code = nil,
+            setupCode = nil,
             aesKey = nil,
             confirmed = false
         }
