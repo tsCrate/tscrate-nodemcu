@@ -9,16 +9,34 @@ local function setupConfirmed ()
 end
 
 
-local function handleStatus(data)
-    print (data)
-    local status = util.decodeJson(data)
-    if status and status.confirmed == true then
-        -- TODO: write key for recording data and ACK receipt
-        StatusTimer:unregister()
-        setupConfirmed()
-    else
+local function handleStatus(code, data)
+    print (code, data)
+
+    if (code < 0) then
+        print("Status request failed")
         StatusTimer:start()
+
+    elseif code >= 400 and code < 500 then
+        if code == 410 then
+            SetupCodeExpired = true
+        else
+            print("Bad status request")
+        end
+
+    elseif code >= 200 and code < 300 then
+        local status = util.decodeJson(data)
+        if status and status.confirmed == true then
+            -- TODO: write key for recording data and ACK receipt
+            StatusTimer:unregister()
+            setupConfirmed()
+        else
+            StatusTimer:start()
+        end
+
+    else
+        print("Status request error")
     end
+
 end
 
 
@@ -30,43 +48,36 @@ end
 
 
 local function getStatus()
-    print('in get status')
     local setup = util.loadSetup()
     if not setup.setupCode then return end
 
+    -- don't request status if there's no wifi
+    if wifi.sta.status() ~= wifi.STA_GOTIP then
+        StatusTimer:start()
+        return
+    end
+
     http.post(
         'https://192.168.1.7:5001/RemoteDevices/setup-status',
-        'Content-Type: text/plain\r\n',
-        setup.setupCode,
-        function(code, data)
-            print (code, data)
-            if (code < 0) then
-                print("Status request failed")
-                StatusTimer:start()
-            elseif code > 400 and code < 500 then
-                print("Bad status request, possibly expired code")
-                writeSetup({ setupCode = nil, aesKey = nil, confirmed = false })
-            elseif code > 200 and code < 300 then
-                handleStatus(data)
-            else
-                print("Status request error")
-            end
-        end
+        'Content-Type: application/json\r\n',
+        util.encodeJson({ setupCode = setup.setupCode }),
+        handleStatus
     )
 end
 
 
 local function startStatusChecks()
-    print('starting status checks')
-
     StatusTimer:unregister()
-    StatusTimer:register(3500, tmr.ALARM_SEMI, function () print('firing') getStatus() end)
+    StatusTimer:register(3500, tmr.ALARM_SEMI, getStatus)
     StatusTimer:start()
 end
 
 
 local function handleSetupCode(setupString)
-    writeSetup(util.decodeJson(setupString))
+    SetupCodeExpired = false
+    local setup = util.decodeJson(setupString)
+    setup.confirmed = false
+    writeSetup(setup)
     startStatusChecks()
 end
 

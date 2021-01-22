@@ -24,6 +24,7 @@ html {
 
 p {
     text-align: center;
+    padding: 10px 20px 10px 20px;
 }
 
 input {
@@ -43,6 +44,10 @@ button {
 
 button:hover {
     background: #89c5e0;
+}
+
+button:disabled {
+    background: gray;
 }
 
 .centerLine {

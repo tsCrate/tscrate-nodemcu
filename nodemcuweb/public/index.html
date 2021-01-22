@@ -20,9 +20,12 @@
 
   <input placeholder="Name (SSID)" id="ssid" class="centerLine">
   <input type="password" id="password" placeholder="Password" class="centerLine">
-  <button onclick="connectWifi(); this.blur();" class="centerLine">Connect</button>
-  <button onclick="openSetupDialog(); this.blur();" class="centerLine">Request Setup</button>
 
+  <button onclick="connectWifi(); this.blur();" class="centerLine">Connect</button>
+  <p id="wifiStatus"></p>
+
+  <button onclick="openSetupDialog(); this.blur();" id="requestSetupButton" class="centerLine" disabled>Request Setup</button>
+  <p id="setupStatus"></p>
 
   <dialog id="requestSetupDialog">
     <div class="centerLine">This will replace any existing setup</div>
@@ -30,9 +33,8 @@
     <button onclick="confirmRequestSetup()" class="centerLine">Confirm</button>
   </dialog>
 
-  <p id="status"></p>
 
-<!-------------------------------- Scripts -------------------------------->
+  <!-------------------------------- Scripts -------------------------------->
   <script src="dialog-polyfill.js"></script>
   <script>
     // check status for server and wifi
@@ -63,15 +65,16 @@
 
 
     async function checkStatus() {
+      let nextCheck = () => setTimeout(() => {
+        checkStatus();
+      }, checkInterval)
+
       fetch('/check-status', {
         method: 'GET',
       })
         .then(handleStatusReponse)
         .catch(handleError)
-        // TODO: limit status checks to 1 pending; currently allows a backlog to build up; 1000 fail, 1000 set timeouts
-        .finally(setTimeout(() => {
-          checkStatus();
-        }, checkInterval));
+        .finally(nextCheck);
     }
 
 
@@ -91,11 +94,16 @@
     };
 
     async function handleStatusReponse(response) {
-      document.getElementById("status").textContent = await response.text();
+      deviceStatus = JSON.parse(await response.text());
+      document.getElementById("wifiStatus").textContent = deviceStatus.wifiStatus;
+      document.getElementById("setupStatus").textContent = deviceStatus.setupStatus;
+      document.getElementById("requestSetupButton").disabled = !deviceStatus.hasIp;
     }
 
     function handleError(err) {
-      document.getElementById("status").textContent = 'Not connected to device';
+      document.getElementById("wifiStatus").textContent = deviceStatus.wifiStatus;
+      document.getElementById("setupStatus").textContent = deviceStatus.setupStatus;
+      document.getElementById("requestSetupButton").disabled = true;
     }
 
   </script>

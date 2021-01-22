@@ -1,4 +1,7 @@
-SetupRequestFailed = false
+SetupReqFailed = false
+SetupCodeExpired = false
+ServerUnreachable = false
+
 local setupUtil = require('setupUtil')
 
 -- web clients connected to the AP
@@ -71,16 +74,25 @@ local function getStatusMsg ()
     local setupMsg = ''
 
     if setup.setupCode and (not setup.confirmed) then
-        setupMsg = setupMsg .. '\r\nCode to enter at DataApp.com: ' .. setup.setupCode
+        if SetupCodeExpired then
+            setupMsg = setupMsg .. 'Code expired. A new code can be requested.'
+        else
+            setupMsg = setupMsg .. 'Code to enter at DataApp.com: ' .. setup.setupCode
+        end
     elseif setup.confirmed then
-        setupMsg = setupMsg .. '\r\nDevice linked to an account at DataApp.com'
+        setupMsg = setupMsg .. 'Device linked to an account at DataApp.com'
     end
 
-    if SetupRequestFailed then
+    if SetupReqFailed then
         setupMsg = setupMsg .. '\r\nSetup request failed'
     end
 
-    return wifiMsg .. '\r\n' .. setupMsg
+    -- return wifiMsg .. '\r\n' .. setupMsg
+    return util.encodeJson({
+        hasIp = wifiCode == wifi.STA_GOTIP,
+        wifiStatus = wifiMsg,
+        setupStatus = setupMsg
+    })
 end
 
 
@@ -115,8 +127,7 @@ local function postWifiConnect(sock)
         local station_cfg = {}
         station_cfg.ssid = reqVals.ssid
         station_cfg.pwd = reqVals.pwd
-        -- TODO: save config to flash
-        station_cfg.save = false
+        station_cfg.save = true
         wifi.sta.config(station_cfg)
 
         get200(sock)
@@ -131,9 +142,9 @@ local function getSetupCode(sock)
         print(code, data)
         get200(sock)
         if (code < 0) then
-            SetupRequestFailed = true
+            SetupReqFailed = true
         else
-            SetupRequestFailed = false
+            SetupReqFailed = false
         end
     end)
 end
@@ -200,7 +211,10 @@ local function startServer()
 
     -- configure wifi
     wifi.setmode(wifi.STATIONAP, false);
-    wifi.ap.config({ssid="DA".. tostring(node.chipid()), pwd="data app", auth=wifi.WPA2_PSK, save=false})
+    wifi.ap.config({
+        ssid="DA".. tostring(node.chipid()),
+        pwd="data app"
+    })
     wifi.ap.dhcp.start()
     return srv
 end
