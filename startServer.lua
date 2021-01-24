@@ -77,7 +77,7 @@ local function getStatusMsg ()
         if SetupCodeExpired then
             setupMsg = setupMsg .. 'Code expired. A new code can be requested.'
         else
-            setupMsg = setupMsg .. 'Code to enter at DataApp.com: ' .. setup.setupCode
+            setupMsg = setupMsg .. 'Code to enter at DataApp.com: ' .. setup.setupCode:sub(1, 3) .. ' ' .. setup.setupCode:sub(4)
         end
     elseif setup.confirmed then
         setupMsg = setupMsg .. 'Device linked to an account at DataApp.com'

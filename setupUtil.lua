@@ -13,6 +13,7 @@ local function handleStatus(code, data)
     print (code, data)
 
     if (code < 0) then
+        -- TODO add status request failed to device statuses
         print("Status request failed")
         StatusTimer:start()
 
@@ -83,6 +84,8 @@ end
 
 
 local function requestSetup(handler)
+    --TODO: set NewCodeRequested for status
+    --TODO: remove existing code, stop status checks if they'd continue on their own
     http.get(
         "https://192.168.1.7:5001/RemoteDevices/get-setup-code",
         nil,

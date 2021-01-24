@@ -14,14 +14,14 @@
   <h1 class="header">Data App</h1>
 
   <p text>
-    WiFi login <br>
-    (the local WiFi network)
+    Wi-Fi login <br>
+    (the local Wi-Fi network)
   </p>
 
   <input placeholder="Name (SSID)" id="ssid" class="centerLine">
   <input type="password" id="password" placeholder="Password" class="centerLine">
 
-  <button onclick="connectWifi(); this.blur();" class="centerLine">Connect</button>
+  <button onclick="connectWifi(); this.blur();" class="centerLine">Connect Wi-Fi</button>
   <p id="wifiStatus"></p>
 
   <button onclick="openSetupDialog(); this.blur();" id="requestSetupButton" class="centerLine" disabled>Request Setup</button>
@@ -37,7 +37,7 @@
   <!-------------------------------- Scripts -------------------------------->
   <script src="dialog-polyfill.js"></script>
   <script>
-    // check status for server and wifi
+    // check status for server and Wi-Fi
     let checkInterval = 1000;
     let confirmRequestDialog = document.getElementById('requestSetupDialog');
     let cancelButton = document.getElementById('cancelButton');
@@ -101,8 +101,8 @@
     }
 
     function handleError(err) {
-      document.getElementById("wifiStatus").textContent = deviceStatus.wifiStatus;
-      document.getElementById("setupStatus").textContent = deviceStatus.setupStatus;
+      document.getElementById("wifiStatus").textContent = 'Not connected to device';
+      document.getElementById("setupStatus").textContent = '';
       document.getElementById("requestSetupButton").disabled = true;
     }
 
