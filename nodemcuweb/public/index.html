@@ -52,6 +52,8 @@
 
     function confirmRequestSetup() {
       confirmRequestDialog.close();
+      document.getElementById("setupStatus").textContent = 'Requesting setup code...';
+
       fetch('get-setup-code', {
         method: 'POST',
       })

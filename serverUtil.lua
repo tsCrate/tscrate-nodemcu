@@ -83,7 +83,6 @@ local function loadSetup()
     else
         return {
             setupCode = nil,
-            aesKey = nil,
             confirmed = false
         }
     end

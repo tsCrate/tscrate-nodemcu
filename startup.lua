@@ -47,9 +47,11 @@ if setup.confirmed then
         -- TODO: start client
         print('start client')
     else
+        print('start reset server')
         LFS.startServer()
         registerFlagHandler()
     end
 else
+    print('start regular setup')
     LFS.startServer()
 end

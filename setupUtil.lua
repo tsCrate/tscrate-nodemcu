@@ -1,11 +1,59 @@
 local util = require("serverUtil")
+local settings = require("settings")
 
+Queue = {}
+RequestInFlight = false
 StatusTimer = tmr.create()
 
+local writeSetup, setupLinked, handleStatus, requestSetup, handleSetupCode,
+      getStatus, startStatusChecks, sendRequest
 
-local function setupConfirmed ()
-    print('setup confirmed')
-    node.restart()
+
+local function processQueue()
+    if not RequestInFlight then
+        local callback = table.remove(Queue, 1)
+        if callback then callback() end
+    end
+end
+
+local function request(url, method, headers, body, callback)
+    table.insert(
+        Queue,
+        function()
+            http.request(
+                url,
+                method,
+                headers,
+                body,
+                function(code, data)
+                    callback(code, data)
+                    RequestInFlight = false
+                    processQueue()
+                end
+            )
+            RequestInFlight = true
+        end
+    )
+    processQueue()
+end
+
+local function post(url, headers, body, callback)
+    request(url, "POST", headers, body, callback)
+end
+
+local function get(url, headers, callback)
+    request(url, "GET", headers, nil, callback)
+end
+
+local function setupLinked (status)
+    writeSetup(status)
+
+    post(
+        settings.serverAddr .. '/RemoteDevices/finish-setup',
+        'Content-Type: application/json\r\n',
+        util.encodeJson({ setupCode = status.setupCode }),
+        function () node.restart() end
+    )
 end
 
 
@@ -27,9 +75,8 @@ local function handleStatus(code, data)
     elseif code >= 200 and code < 300 then
         local status = util.decodeJson(data)
         if status and status.confirmed == true then
-            -- TODO: write key for recording data and ACK receipt
             StatusTimer:unregister()
-            setupConfirmed()
+            setupLinked(status)
         else
             StatusTimer:start()
         end
@@ -49,6 +96,7 @@ end
 
 
 local function getStatus()
+    print('in get status')
     local setup = util.loadSetup()
     if not setup.setupCode then return end
 
@@ -58,8 +106,8 @@ local function getStatus()
         return
     end
 
-    http.post(
-        'https://192.168.1.7:5001/RemoteDevices/setup-status',
+    post(
+        settings.serverAddr .. '/RemoteDevices/setup-status',
         'Content-Type: application/json\r\n',
         util.encodeJson({ setupCode = setup.setupCode }),
         handleStatus
@@ -75,7 +123,11 @@ end
 
 
 local function handleSetupCode(setupString)
+    print('in handle setup')
+    print('setup string: ' .. setupString)
     SetupCodeExpired = false
+    SetupCodeRequested = false
+
     local setup = util.decodeJson(setupString)
     setup.confirmed = false
     writeSetup(setup)
@@ -84,10 +136,13 @@ end
 
 
 local function requestSetup(handler)
-    --TODO: set NewCodeRequested for status
-    --TODO: remove existing code, stop status checks if they'd continue on their own
-    http.get(
-        "https://192.168.1.7:5001/RemoteDevices/get-setup-code",
+    print ('in get req setup')
+    StatusTimer:unregister()
+    file.remove('setup')
+    SetupCodeRequested = true
+
+    get(
+        settings.serverAddr .. "/RemoteDevices/get-setup-code",
         nil,
         function(code, data)
             if (code < 0) then

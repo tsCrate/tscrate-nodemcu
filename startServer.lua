@@ -1,6 +1,7 @@
 SetupReqFailed = false
 SetupCodeExpired = false
 ServerUnreachable = false
+SetupCodeRequested = false
 
 local setupUtil = require('setupUtil')
 
@@ -81,6 +82,8 @@ local function getStatusMsg ()
         end
     elseif setup.confirmed then
         setupMsg = setupMsg .. 'Device linked to an account at DataApp.com'
+    elseif SetupCodeRequested then
+        setupMsg = setupMsg .. 'Requesting setup code...'
     end
 
     if SetupReqFailed then
@@ -138,6 +141,7 @@ end
 
 
 local function getSetupCode(sock)
+    print ('in getSetup')
     setupUtil.requestSetup(function (code, data)
         print(code, data)
         get200(sock)
