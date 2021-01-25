@@ -19,11 +19,11 @@ local function registerFlagHandler()
         -- register 2 events:
         -- first, a timer to delete flag and restart in 5 mins
         local flagDelTmr = tmr.create()
-        flagDelTmr.register(3 * 60 * 1000, tmr.ALARM_SINGLE, function()
+        flagDelTmr:register(3 * 60 * 1000, tmr.ALARM_SINGLE, function()
             file.remove(resetFlag)
             node.restart()
         end)
-        flagDelTmr.start()
+        flagDelTmr:start()
         -- second, to cancel the timer if a user connects within 3 mins
         wifi.eventmon.register(wifi.eventmon.AP_STACONNECTED, function ()
             flagDelTmr:unregister()
@@ -44,14 +44,14 @@ end
 local setup = util.loadSetup()
 if setup.confirmed then
     if not setupTrigger then
-        -- TODO: start client
-        print('start client')
+        print('Client mode. Reporting to the server.')
+        LFS.startClient()
     else
-        print('start reset server')
+        print('Reconfigure mode. Restarts in 3 minutes if no user connects to the access point.')
         LFS.startServer()
         registerFlagHandler()
     end
 else
-    print('start regular setup')
+    print('Setup mode. Connect to the device to configure Wi-Fi and get a setup code.')
     LFS.startServer()
 end

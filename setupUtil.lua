@@ -9,6 +9,13 @@ local writeSetup, setupLinked, handleStatus, requestSetup, handleSetupCode,
       getStatus, startStatusChecks, sendRequest
 
 
+local function writeSetup(setup)
+    local fd = file.open('setup', 'w+')
+    fd:writeline(util.encodeJson(setup))
+    fd:close()
+end
+
+
 local function processQueue()
     if not RequestInFlight then
         local callback = table.remove(Queue, 1)
@@ -85,13 +92,6 @@ local function handleStatus(code, data)
         print("Status request error")
     end
 
-end
-
-
-local function writeSetup(setup)
-    local fd = file.open('setup', 'w+')
-    fd:writeline(util.encodeJson(setup))
-    fd:close()
 end
 
 
