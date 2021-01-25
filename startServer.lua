@@ -1,22 +1,9 @@
--- make globals available to this module
-----------------------------------------------------------------------
-local M = {}
-do
-    local globaltbl = _G
-    local newenv = setmetatable({}, {
-        __index = function (t, k)
-            local v = M[k]
-            if v == nil then return globaltbl[k] end
-            return v
-        end,
-        __newindex = M,
-    })
-    if setfenv then
-        setfenv(1, newenv) -- for 5.1
-    else
-        _ENV = newenv -- for 5.2
-    end
-end
+SetupReqFailed = false
+SetupCodeExpired = false
+ServerUnreachable = false
+SetupCodeRequested = false
+
+local setupUtil = require('setupUtil')
 
 -- web clients connected to the AP
 local clients = {}
@@ -63,6 +50,13 @@ local function get404(sock)
 end
 
 
+local function get200(sock, msg)
+    msg = msg or ''
+    sock:on("sent", function(s) closeClient(s) end)
+    sock:send("HTTP/1.0 200 OK Found\r\n\r\n" .. msg)
+end
+
+
 local wifiStates = {
     [wifi.STA_IDLE] = 'WiFi Idle',
     [wifi.STA_CONNECTING] = "Connecting to WiFi: ",
@@ -75,11 +69,37 @@ local wifiStates = {
 local function getStatusMsg ()
     local wifiCode = wifi.sta.status()
     local ssid = wifi.sta.getconfig()
-    return wifiStates[wifiCode] .. (wifiCode ~= wifi.STA_IDLE and ssid or '')
+    local wifiMsg = wifiStates[wifiCode] .. ((wifiCode ~= wifi.STA_IDLE and ssid) or '')
+
+    local setup = util.loadSetup()
+    local setupMsg = ''
+
+    if setup.setupCode and (not setup.confirmed) then
+        if SetupCodeExpired then
+            setupMsg = setupMsg .. 'Code expired. A new code can be requested.'
+        else
+            setupMsg = setupMsg .. 'Code to enter at DataApp.com: ' .. setup.setupCode:sub(1, 3) .. ' ' .. setup.setupCode:sub(4)
+        end
+    elseif setup.confirmed then
+        setupMsg = setupMsg .. 'Device linked to an account at DataApp.com'
+    elseif SetupCodeRequested then
+        setupMsg = setupMsg .. 'Requesting setup code...'
+    end
+
+    if SetupReqFailed then
+        setupMsg = setupMsg .. '\r\nSetup request failed'
+    end
+
+    -- return wifiMsg .. '\r\n' .. setupMsg
+    return util.encodeJson({
+        hasIp = wifiCode == wifi.STA_GOTIP,
+        wifiStatus = wifiMsg,
+        setupStatus = setupMsg
+    })
 end
 
 
-local function getStatus(sock)
+local function getDeviceStatus(sock)
     sock:on("sent", function(s) closeClient(s) end)
     sock:send("HTTP/1.0 200 OK\r\n\r\n" .. getStatusMsg())
 end
@@ -92,7 +112,13 @@ local function serveFile(sock, resource)
         return
     end
     sock:on("sent", function(s) sendFile(s) end)
-    sock:send("HTTP/1.0 200 OK\r\n\r\n")
+
+    local contEnc = ''
+    local fileExt = util.getFileExt(resource)
+    if fileExt == '.gz' then contEnc = '\r\nContent-Encoding: gzip' end
+    local contType = ''
+    if fileExt == '.css' then contType = '\r\nContent-Type: text/css' end
+    sock:send('HTTP/1.0 200 OK' .. contType .. contEnc .. '\r\n\r\n')
 end
 
 
@@ -104,25 +130,45 @@ local function postWifiConnect(sock)
         local station_cfg = {}
         station_cfg.ssid = reqVals.ssid
         station_cfg.pwd = reqVals.pwd
-        -- TODO: save config to flash
-        station_cfg.save = false
+        station_cfg.save = true
         wifi.sta.config(station_cfg)
+
+        get200(sock)
     -- else wait for the rest of the body
     else
     end
 end
 
 
+local function getSetupCode(sock)
+    print ('in getSetup')
+    setupUtil.requestSetup(function (code, data)
+        print(code, data)
+        get200(sock)
+        if (code < 0) then
+            SetupReqFailed = true
+        else
+            SetupReqFailed = false
+        end
+    end)
+end
+
+
 -- request controllers
 local controllers = {
-  ['check-status'] = getStatus,
+  ['check-status'] = getDeviceStatus,
   ['wifi-connect'] = postWifiConnect,
+  ['get-setup-code'] = getSetupCode,
   [''] = function (sock) serveFile(sock, 'index.html') end
 }
 
 
 -- handle data received from AP client
 local function handleReceive(sock, data)
+    if not clients[sock] then
+        return nil
+    end
+
     -- buffer request
     clients[sock].rcvBuf = clients[sock].rcvBuf .. data
     -- check for at least one \r\n\r\n
@@ -131,12 +177,12 @@ local function handleReceive(sock, data)
     if k then
         -- parse endpoint
         local endpoint = util.parseResource(clients[sock].rcvBuf)
-        print('endpoint: ' .. endpoint)
+        local fileName = util.getFileName(endpoint)
 
-        if file.exists(endpoint) then
-            serveFile(sock, endpoint)
-        elseif controllers[endpoint] ~= nil then
+        if controllers[endpoint] ~= nil then
             controllers[endpoint](sock)
+        elseif fileName then
+            serveFile(sock, fileName)
         else
             get404(sock)
         end
@@ -157,17 +203,24 @@ end
 
 
 -- setup server and enter AP mode
-function createSetupServer()
-    local srv=net.createServer(net.TCP)
+local function startServer()
+    local setup = util.loadSetup()
+    -- setupCode, no confirm; status checks
+    if setup.setupCode and setup.confirmed == false then
+        setupUtil.startStatusChecks()
+    end
+
+    local srv = net.createServer(net.TCP)
     srv:listen(80, handleConn)
 
     -- configure wifi
-    wifi.eventmon.register(wifi.eventmon.AP_STADISCONNECTED, function() print("Dropped AP client") end)
     wifi.setmode(wifi.STATIONAP, false);
-    wifi.ap.config({ssid="DA".. tostring(node.chipid()), pwd="data app", auth=wifi.WPA2_PSK, save=false, beacon=100})
+    wifi.ap.config({
+        ssid="DA".. tostring(node.chipid()),
+        pwd="data app"
+    })
     wifi.ap.dhcp.start()
     return srv
 end
 
-
-return M
+startServer()

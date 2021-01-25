@@ -14,12 +14,17 @@ html {
     }
 }
 
+#status {
+    white-space: pre-wrap;
+}
+
 .header {
     text-align: center;
 }
 
 p {
     text-align: center;
+    padding: 10px 20px 10px 20px;
 }
 
 input {
@@ -33,12 +38,16 @@ button {
     border: none;
     font-size: 1.0em;
     color: #000000;
-    background: #4ce65b;
+    background: #52aed9;
     padding: 10px 20px 10px 20px;
 }
 
 button:hover {
-    background: #49d655;
+    background: #89c5e0;
+}
+
+button:disabled {
+    background: gray;
 }
 
 .centerLine {

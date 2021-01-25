@@ -68,14 +68,41 @@ local function extractTable(clients, sock)
         local i, j = string.find(clients[sock].rcvBuf, "\r\n\r\n")
         local encJson = string.sub(clients[sock].rcvBuf, j+1, k)
         clients[sock].rcvBuf = ""
-        --print("heap: "..node.heap()/1000)
-        --print("gc: "..collectgarbage("count"))
-        --print("clients: "..tablelength(clients))
         return decodeJson(encJson)
     end
     -- else return nil
     return nil
 end
+
+
+local function loadSetup()
+    if file.open('setup', 'r') then
+        local setupString = file.readline()
+        file.close()
+        return decodeJson(setupString)
+    else
+        return {
+            setupCode = nil,
+            confirmed = false
+        }
+    end
+end
+
+
+local function getFileExt(name)
+    return name:match('%.[^.]-$')
+end
+
+
+-- Param: name - name of a file (.html, .css, .js, .png) that may be stored as .gz
+-- Return the name of a gz or .* file matching the give name
+local function getFileName(name)
+    local files = file.list()
+
+    return (files[name] and name)
+        or (files[name .. '.gz'] and name .. '.gz')
+end
+
 
 return {
     parseResource = parseResource,
@@ -83,5 +110,8 @@ return {
     getBody = getBody,
     parseServerMsg = parseServerMsg,
     encodeJson = encodeJson,
-    decodeJson = decodeJson
+    decodeJson = decodeJson,
+    loadSetup = loadSetup,
+    getFileExt = getFileExt,
+    getFileName = getFileName
 }

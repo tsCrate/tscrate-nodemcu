@@ -5,7 +5,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Data App</title>
-  <link href="style.css" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="stylesheet" type="text/css" href="dialog-polyfill.css">
 </head>
 
 <body>
@@ -13,59 +14,98 @@
   <h1 class="header">Data App</h1>
 
   <p text>
-    WiFi login <br>
-    (the local WiFi network)
+    Wi-Fi login <br>
+    (the local Wi-Fi network)
   </p>
 
   <input placeholder="Name (SSID)" id="ssid" class="centerLine">
   <input type="password" id="password" placeholder="Password" class="centerLine">
-  <button onclick="connectWifi(); this.blur();" type="button" class="centerLine">Connect</button>
 
-  <p id="status"></p>
+  <button onclick="connectWifi(); this.blur();" class="centerLine">Connect Wi-Fi</button>
+  <p id="wifiStatus"></p>
 
+  <button onclick="openSetupDialog(); this.blur();" id="requestSetupButton" class="centerLine" disabled>Request Setup</button>
+  <p id="setupStatus"></p>
+
+  <dialog id="requestSetupDialog">
+    <div class="centerLine">This will replace any existing setup</div>
+    <button onclick="closeDialog()" class="centerLine" id="cancelButton">Cancel</button>
+    <button onclick="confirmRequestSetup()" class="centerLine">Confirm</button>
+  </dialog>
+
+
+  <!-------------------------------- Scripts -------------------------------->
+  <script src="dialog-polyfill.js"></script>
   <script>
-    // check status for server and wifi
-    var checkInterval = 1000;
+    // check status for server and Wi-Fi
+    let checkInterval = 1000;
+    let confirmRequestDialog = document.getElementById('requestSetupDialog');
+    let cancelButton = document.getElementById('cancelButton');
+    dialogPolyfill.registerDialog(confirmRequestDialog);
+
     checkStatus();
 
+    function openSetupDialog() {
+      confirmRequestDialog.showModal();
+      cancelButton.blur();
+    }
+
+    function confirmRequestSetup() {
+      confirmRequestDialog.close();
+      document.getElementById("setupStatus").textContent = 'Requesting setup code...';
+
+      fetch('get-setup-code', {
+        method: 'POST',
+      })
+        .catch(handleError)
+    }
+
+
+    function closeDialog() {
+      confirmRequestDialog.close();
+    }
+
+
     async function checkStatus() {
+      let nextCheck = () => setTimeout(() => {
+        checkStatus();
+      }, checkInterval)
+
       fetch('/check-status', {
         method: 'GET',
       })
-        .then(handleResponse)
+        .then(handleStatusReponse)
         .catch(handleError)
-        .finally(setTimeout(() => {
-          checkStatus();
-        }, checkInterval));
+        .finally(nextCheck);
     }
+
 
     async function connectWifi() {
       let ssid = document.getElementById("ssid").value;
       let pwd = document.getElementById("password").value;
-      const errorMsg =
 
-        // Default options are marked with *
-        fetch('/wifi-connect', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ ssid: ssid, pwd: pwd })
-        })
-          .then(handleResponse)
-          .catch(handleError);
+      // Default options are marked with *
+      fetch('/wifi-connect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ ssid: ssid, pwd: pwd })
+      })
+        .catch(handleError);
     };
 
-    async function handleResponse(response) {
-      let responseText = await response.text();
-      let status = response.status === 200
-        ? responseText
-        : 'Communication error. Reset device';
-      document.getElementById("status").textContent = status;
+    async function handleStatusReponse(response) {
+      deviceStatus = JSON.parse(await response.text());
+      document.getElementById("wifiStatus").textContent = deviceStatus.wifiStatus;
+      document.getElementById("setupStatus").textContent = deviceStatus.setupStatus;
+      document.getElementById("requestSetupButton").disabled = !deviceStatus.hasIp;
     }
 
     function handleError(err) {
-      document.getElementById("status").textContent = 'Not connected to device'
+      document.getElementById("wifiStatus").textContent = 'Not connected to device';
+      document.getElementById("setupStatus").textContent = '';
+      document.getElementById("requestSetupButton").disabled = true;
     }
 
   </script>
