@@ -39,13 +39,18 @@ local setupTrigger = resetExtended == externalReset and file.exists(resetFlag)
 
 if resetExtended == externalReset then
     writeResetFlag()
+else
+    file.remove(resetFlag)
 end
 
 local setup = util.loadSetup()
 if setup.confirmed then
     if not setupTrigger then
         print('Client mode. Reporting to the server.')
-        LFS.startClient()
+        wifi.eventmon.register(wifi.eventmon.STA_GOT_IP, function ()
+            print('got ip')
+        end)
+        --LFS.startClient()
     else
         print('Reconfigure mode. Restarts in 3 minutes if no user connects to the access point.')
         LFS.startServer()
