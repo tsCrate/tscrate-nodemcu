@@ -1,4 +1,3 @@
-local settings = require('settings')
 local sntpServers = { 'time1.google.com', 'time2.google.com', 'time3.google.com', 'time4.google.com' }
 
 wifi.setmode(wifi.STATION, true)
@@ -6,7 +5,7 @@ wifi.sta.autoconnect(1)
 
 
 local function sntpComplete()
-    print('SNTP complete')
+    print('SNTP complete. Starting main.')
     main()
 end
 
@@ -49,7 +48,9 @@ end
 if wifi.sta.status() == wifi.STA_GOTIP then
   startClient()
 else
-  wifi.eventmon.register(wifi.eventmon.STA_GOT_IP, function ()
-    startClient()
-  end)
+  wifi.eventmon.register(wifi.eventmon.STA_GOT_IP,
+    function ()
+      startClient()
+    end
+  )
 end

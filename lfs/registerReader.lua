@@ -5,8 +5,9 @@ local interval, readFunc, dsname, tmrMode = ...
 local function initFile(dsname)
     local key = util.loadSetup().key
     if not key then
-        error('Device is not setup to report')
+        error('Device is not setup')
     end
+
     local fd = file.open(dsname, 'w+')
     fd:writeline('{\n    "key": ' .. key .. ',\n    "dataset": ' .. dsname .. ',\n    "readings": [\n')
     fd:close()

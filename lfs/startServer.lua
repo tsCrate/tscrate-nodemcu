@@ -3,16 +3,11 @@ SetupCodeExpired = false
 ServerUnreachable = false
 SetupCodeRequested = false
 
+local util = require("serverUtil")
 local setupUtil = require('setupUtil')
 
 -- web clients connected to the AP
 local clients = {}
--- moduleId, passphrase, etc.
-local moduleSettings = {}
--- status of server connection
-local status = "Idle"
-
-local util = require("serverUtil")
 
 
 -- remove client data to be garbage collected
@@ -65,6 +60,7 @@ local wifiStates = {
     [wifi.STA_FAIL] = "WiFi failed: ",
     [wifi.STA_GOTIP] = "WiFi connected: "
 }
+
 
 local function getStatusMsg ()
     local wifiCode = wifi.sta.status()
@@ -141,9 +137,7 @@ end
 
 
 local function getSetupCode(sock)
-    print ('in getSetup')
     setupUtil.requestSetup(function (code, data)
-        print(code, data)
         get200(sock)
         if (code < 0) then
             SetupReqFailed = true
@@ -195,7 +189,7 @@ local function handleConn(newSock)
     clients[newSock] = {}
     clients[newSock].rcvBuf= ""
     newSock:on("disconnection", function(sock, err)
-        print('client disconn')
+        print('User disconnected')
         closeClient(sock)
     end)
     newSock:on("receive", handleReceive)

@@ -62,7 +62,6 @@ end
 
 
 local function handleStatus(code, data)
-    print (code, data)
 
     if (code < 0) then
         -- TODO add status request failed to device statuses
@@ -93,7 +92,6 @@ end
 
 
 local function getStatus()
-    print('in get status')
     local setup = util.loadSetup()
     if not setup.setupCode then return end
 
@@ -120,8 +118,7 @@ end
 
 
 local function handleSetupCode(setupString)
-    print('in handle setup')
-    print('setup string: ' .. setupString)
+    print('setup: ' .. setupString)
     SetupCodeExpired = false
     SetupCodeRequested = false
 
@@ -133,7 +130,6 @@ end
 
 
 local function requestSetup(handler)
-    print ('in get req setup')
     StatusTimer:unregister()
     file.remove('setup')
     SetupCodeRequested = true
@@ -145,7 +141,6 @@ local function requestSetup(handler)
             if (code < 0) then
                 handler(code, data)
             else
-                print(code, data)
                 handleSetupCode(data)
                 handler(code, data)
             end
