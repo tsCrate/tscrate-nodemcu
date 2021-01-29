@@ -25,7 +25,7 @@ local function request(url, method, headers, body, callback)
         Queue,
         function()
             http.request(
-                "GET /RemoteDevices/test HTTP/1.1\r\nHost: 192.168.1.7\r\nConnection: keep-alive\r\nAccept: application/json\r\n\r\n" ,
+                url,
                 method,
                 headers,
                 body,
