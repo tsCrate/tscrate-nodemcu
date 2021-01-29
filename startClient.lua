@@ -1,10 +1,32 @@
 local settings = require('settings')
+local sntpServers = { 'time1.google.com', 'time2.google.com', 'time3.google.com', 'time4.google.com' }
 
 wifi.setmode(wifi.STATION, true)
 wifi.sta.autoconnect(1)
 
-local function startClient()
 
+local function sntpComplete()
+    print('SNTP complete')
+    main()
+end
+
+
+local function sntpFail()
+    print("SNTP failed. Time not set. Retrying in 10 seconds.")
+    local sntpTmr = tmr.create()
+    sntpTmr:register(10000, tmr.ALARM_SINGLE, sntpStart)
+end
+
+
+local function sntpStart()
+    sntp.sync(sntpServers, sntpComplete, sntpFail)
+end
+
+
+local function startClient()
+  sntpStart()
+
+  --[[
   local conn = tls.createConnection()
   conn:on("connection", function(sck, c)
     print('connected')
@@ -20,6 +42,7 @@ local function startClient()
   conn:on("sent", function(sck, c) print('sent') end)
 
   conn:connect(5001, '192.168.1.7')
+  ]]
 end
 
 

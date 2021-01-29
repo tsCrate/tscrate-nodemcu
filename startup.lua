@@ -50,7 +50,7 @@ if setup.confirmed then
         wifi.eventmon.register(wifi.eventmon.STA_GOT_IP, function ()
             print('got ip')
         end)
-        --LFS.startClient()
+        LFS.startClient()
     else
         print('Reconfigure mode. Restarts in 3 minutes if no user connects to the access point.')
         LFS.startServer()

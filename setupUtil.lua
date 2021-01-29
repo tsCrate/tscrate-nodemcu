@@ -5,9 +5,6 @@ Queue = {}
 RequestInFlight = false
 StatusTimer = tmr.create()
 
-local writeSetup, setupLinked, handleStatus, requestSetup, handleSetupCode,
-      getStatus, startStatusChecks, sendRequest
-
 
 local function writeSetup(setup)
     local fd = file.open('setup', 'w+')
