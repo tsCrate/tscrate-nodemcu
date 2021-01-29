@@ -9,4 +9,4 @@ end
 node.LFS.get('_init')()
 node.LFS.startup()
 
-main = dofile('main.lua')
+main = function() dofile('main.lua') end

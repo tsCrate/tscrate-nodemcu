@@ -14,6 +14,10 @@ end
 
 
 local function record(dsname, readFunc)
+    if not file.exists(dsname) then
+        initFile(dsname)
+    end
+
     local val, unit, error = readFunc()
 
     if not ((unit == nil) or (type(unit) == 'string')) then
