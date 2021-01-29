@@ -1,11 +1,6 @@
 local util = require("serverUtil")
 local settings = require("settings")
 
-Queue = {}
-RequestInFlight = false
-StatusTimer = tmr.create()
-
-
 local function writeSetup(setup)
     local fd = file.open('setup', 'w+')
     fd:writeline(util.encodeJson(setup))
@@ -15,14 +10,14 @@ end
 
 local function processQueue()
     if not RequestInFlight then
-        local callback = table.remove(Queue, 1)
+        local callback = table.remove(RequestQueue, 1)
         if callback then callback() end
     end
 end
 
 local function request(url, method, headers, body, callback)
     table.insert(
-        Queue,
+        RequestQueue,
         function()
             http.request(
                 url,

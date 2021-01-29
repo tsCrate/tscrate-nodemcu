@@ -1,5 +1,5 @@
 sntp.sync()
-Queue = {}
+RequestQueue = {}
 RequestInFlight = false
 recvBuff = ''
 testTmr = tmr.create()
@@ -42,7 +42,7 @@ end
 
 function processQueue()
     if not currentRequest then
-        currentRequest = table.remove(Queue, 1)
+        currentRequest = table.remove(RequestQueue, 1)
         if currentRequest then
             print('sending')
             conn:send(currentRequest.message)
@@ -57,7 +57,7 @@ function request(url, method, body, callback)
         msg = 'GET ' .. url .. ' HTTP/1.1\r\nHost: 192.168.1.7\r\nConnection: keep-alive\r\nAccept: application/json\r\n\r\n'
     end
     table.insert(
-        Queue,
+        RequestQueue,
         {
             message = msg,
             callback = callback

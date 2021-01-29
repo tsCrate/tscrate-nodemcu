@@ -1,8 +1,3 @@
-SetupReqFailed = false
-SetupCodeExpired = false
-ServerUnreachable = false
-SetupCodeRequested = false
-
 local util = require("serverUtil")
 local setupUtil = require('setupUtil')
 

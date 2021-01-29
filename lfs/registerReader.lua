@@ -1,4 +1,5 @@
 local util = require('serverUtil')
+local settings = require('settings')
 
 local interval, readFunc, dsname, tmrMode = ...
 
@@ -33,6 +34,19 @@ local function record(dsname, readFunc)
 end
 
 
+local function registerDataSet(dsname)
+    if HttpTimer then return end;
+
+    HttpTimer = tmr.create()
+    HttpTimer:register(settings.httpTimerInterval, tmr.ALARM_AUTO,
+        function()
+            node.LFS.sendRecordings(dsname)
+        end
+    )
+    HttpTimer:start()
+end
+
+
 local function registerReader()
     tmrMode = tmrMode or tmr.ALARM_AUTO
 
@@ -52,7 +66,7 @@ local function registerReader()
     readTmr:start()
 
     --TODO: check/set global HTTP request timer to send data
-
+    registerDataSet(dsname)
     return readTmr
 end
 

@@ -1,3 +1,5 @@
+-- initialize global vars
+dofile('global.lua')
 local util = require('serverUtil')
 
 -- reset flag filename
