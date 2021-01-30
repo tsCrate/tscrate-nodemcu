@@ -15,5 +15,7 @@ SetupCodeRequested = false
 
 -- Data files queued to be uploaded
 QueuedFileNames = {}
--- Current data file being uploaded
-FileInFlight = nil
+-- Name of data file being sent
+FileNameInFlight = nil
+-- File descriptor of data file being sent
+FdInFlight = nil
