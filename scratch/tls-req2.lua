@@ -37,7 +37,7 @@ function startReqs()
 end
 
 
-function registerHandlers()
+function sendFile()
     conn:on("connection", function(sck)
         print('connected')
         makeRequest()
@@ -74,5 +74,5 @@ function sntpFail()
     print("Couldn't get time")
 end
 
-registerHandlers()
+sendFile()
 sntp.sync(sntpServers, sntpComplete, sntpFail)

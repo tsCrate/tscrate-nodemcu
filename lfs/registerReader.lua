@@ -4,6 +4,7 @@ local settings = require('settings')
 local interval, readFunc, dsname, tmrMode = ...
 
 local function initFile(dsname)
+    -- TODO: prepend 'dataset_' to the filename
     local key = util.loadSetup().key
     if not key then
         error('Device is not setup')
@@ -35,6 +36,7 @@ end
 
 
 local function registerDataSet(dsname)
+    --[[
     if HttpTimer then return end;
 
     HttpTimer = tmr.create()
@@ -44,6 +46,7 @@ local function registerDataSet(dsname)
         end
     )
     HttpTimer:start()
+    ]]
 end
 
 
@@ -65,7 +68,6 @@ local function registerReader()
     readTmr:register(interval, tmrMode, function() record(dsname, readFunc) end)
     readTmr:start()
 
-    --TODO: check/set global HTTP request timer to send data
     registerDataSet(dsname)
     return readTmr
 end

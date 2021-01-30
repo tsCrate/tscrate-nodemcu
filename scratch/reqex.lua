@@ -15,7 +15,7 @@ print('do it')
 
     conn:on("disconnection", function(sck, c)
         print('disconn', c)
-        registerHandlers()
+        startConnection()
     end)
 
     conn:on("receive",
