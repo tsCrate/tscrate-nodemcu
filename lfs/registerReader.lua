@@ -3,22 +3,21 @@ local settings = require('settings')
 
 local interval, readFunc, dsname, tmrMode = ...
 
-local function initFile(dsname)
-    -- TODO: prepend 'dataset_' to the filename
+local function initFile(dsfilename)
     local key = util.loadSetup().key
     if not key then
         error('Device is not setup')
     end
 
-    local fd = file.open(dsname, 'w+')
+    local fd = file.open(dsfilename, 'w+')
     fd:writeline('{\n    "key": ' .. key .. ',\n    "dataset": ' .. dsname .. ',\n    "readings": [\n')
     fd:close()
 end
 
 
-local function record(dsname, readFunc)
-    if not file.exists(dsname) then
-        initFile(dsname)
+local function record(dsfilename, readFunc)
+    if not file.exists(dsfilename) then
+        initFile(dsfilename)
     end
 
     local val, unit, error = readFunc()
@@ -29,46 +28,52 @@ local function record(dsname, readFunc)
 
     local ts = rtctime.get()
 
-    local fd = file.open(dsname, 'a+')
+    local fd = file.open(dsfilename, 'a+')
     fd:writeline(sjson.encode({ts = ts, u = unit, val = val}) .. ',')
     fd:close()
 end
 
 
-local function registerDataSet(dsname)
-    --[[
-    if HttpTimer then return end;
+local function startUploadTimer()
+    -- Only start the timer once
+    if UploadTimer then return end;
 
-    HttpTimer = tmr.create()
-    HttpTimer:register(settings.httpTimerInterval, tmr.ALARM_AUTO,
+    -- Send files that were here on startup
+    node.LFS.sendRecordings()
+
+    UploadTimer = tmr.create()
+    UploadTimer:register(settings.uploadInterval, tmr.ALARM_AUTO,
         function()
-            node.LFS.sendRecordings(dsname)
+            node.LFS.sendRecordings()
         end
     )
-    HttpTimer:start()
-    ]]
+    UploadTimer:start()
 end
 
 
 local function registerReader()
     tmrMode = tmrMode or tmr.ALARM_AUTO
+    local dsfilename = settings.dataFilePrefix .. dsname
 
     if type(readFunc) ~= 'function' then
         error('Parameter must be a function')
     end
 
-    if not file.exists(dsname) then
-        initFile(dsname)
+    if not file.exists(dsfilename) then
+        initFile(dsfilename)
     end
 
+    --[[ startup upload timer before creating any new files
+    (flush any existing files) ]]
+    startUploadTimer()
+
     -- record now, and register to record later
-    record(dsname, readFunc)
+    record(dsfilename, readFunc)
 
     local readTmr = tmr.create()
-    readTmr:register(interval, tmrMode, function() record(dsname, readFunc) end)
+    readTmr:register(interval, tmrMode, function() record(dsfilename, readFunc) end)
     readTmr:start()
 
-    registerDataSet(dsname)
     return readTmr
 end
 

@@ -22,6 +22,7 @@ local function handleSent(sck)
 end
 
 
+-- TODO: break largest code chunks into files to reduce heap use
 local function getBody()
     -- determine if body is complete
     local _, i = UploadRecvBuffer:find('\r\n\r\n')
@@ -106,8 +107,15 @@ end
 
 
 local function sendFiles()
-
     local conn = tls.createConnection(net.TCP, 0)
+
+    UploadTimeout = tmr.create()
+    UploadTimeout:register(3/4 * settings.uploadInterval, tmr.ALARM_AUTO,
+        function()
+            conn:close()
+        end
+    )
+    UploadTimeout:start()
 
     conn:on("connection", sendNextFile)
 

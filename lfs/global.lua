@@ -1,4 +1,4 @@
-HttpTimer = nil
+UploadTimer = nil
 
 -- Setup server queue for requests to API
 RequestQueue = {}
@@ -21,3 +21,5 @@ FileNameInFlight = nil
 FdInFlight = nil
 -- Buffer for responses to uploads
 UploadRecvBuffer = ''
+-- Timer to abort upload
+UploadTimeout = nil

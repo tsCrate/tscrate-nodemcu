@@ -5,7 +5,7 @@ return {
     serverDomain = serverDomain,
     serverPort = 5001,
     serverAddr = 'https://' .. serverDomain .. ':' .. serverPort,
-    httpTimerInterval = 10000,
+    uploadInterval = 45000,
     dataFilePrefix = 'data_',
     queuedFilePrefix = 'queued_'
 }
