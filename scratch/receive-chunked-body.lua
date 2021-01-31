@@ -137,6 +137,7 @@ function startClient()
   conn:on("receive", function(sck, c)
     handleReceive(sck, c)
   end)
+
   conn:on("sent", function(sck, c)
     local sec, microsec = rtctime.get()
     local nowTime = sec + microsec / math.pow(10, 6)

@@ -22,27 +22,38 @@ local function handleSent(sck)
 end
 
 
-local function handleReceive(sck, c)
-    print('recv ', c)
-    local term = c:match('0\r\n\r\n')
-    if term then
-        --TODO: handle response, delete file
-        print('terminated')
-        sck:close()
+local function getBody()
+    -- determine if body is complete
+    local _, i = UploadRecvBuffer:find('\r\n\r\n')
+    if not i then return nil end
+
+    i = i + 1
+    local chunkSize = nil
+    local j
+    local body = ''
+    while chunkSize ~= 0 do
+        -- slide i,j to chunk size (chunk size transmitted in hex chars)
+        _, j = UploadRecvBuffer:find('\r\n', i)
+
+        -- Haven't received end of chunk size portion to parse
+        if not j then return nil end
+
+        chunkSize = tonumber(UploadRecvBuffer:sub(i, j), 16)
+        if (chunkSize ~= 0) and ((UploadRecvBuffer:len()) <= (j + chunkSize + 2)) then
+            -- The full chunk hasn't been received (chunk > received data)
+            return nil
+        end
+
+        body = body .. UploadRecvBuffer:sub(j + 1, j + chunkSize - 1)
+        i = j + chunkSize + 3
     end
-
-    --[[
-    bufferHttpResponse
-    parseHttpResponse
-    handleHttpResponse
-        deletefile
+    return body
+end
 
 
-    setInFlightFile
-    startPost(nextFile)
-
-    closeConnection
-    ]]
+local function handleBody(body)
+    -- TODO: parse body
+    print(UploadRecvBuffer:gsub('\r\n', '\\r\\n'))
 end
 
 
@@ -56,17 +67,49 @@ local function startPost(sck)
 end
 
 
-local function sendFiles()
-    --pop name, open filedesc, send file
+local function sendNextFile(sck)
+    -- Pop name, open filedesc, send file
+    -- No files left
     FileNameInFlight = table.remove(QueuedFileNames)
-    if not FileNameInFlight then return end
+    if not FileNameInFlight then
+        sck:close()
+        return nil
+    end
 
+    -- File doesn't exist, bail
     FdInFlight= file.open(FileNameInFlight, 'r')
-    if not FdInFlight then return end
+    if not FdInFlight then
+        sck:close()
+        return nil
+    end
+
+    startPost(sck)
+end
+
+
+local function handleReceive(sck, data)
+    if data then UploadRecvBuffer = UploadRecvBuffer .. data end
+    if not UploadRecvBuffer:match('Transfer%-Encoding: chunked') then
+      print('Response must be chunked')
+      return
+    end
+
+    local body = getBody()
+    if body then
+      handleBody(body)
+      UploadRecvBuffer = ''
+      file.remove(FileNameInFlight)
+      sendNextFile(sck)
+    end
+
+end
+
+
+local function sendFiles()
 
     local conn = tls.createConnection(net.TCP, 0)
 
-    conn:on("connection", startPost)
+    conn:on("connection", sendNextFile)
 
     conn:on("sent", handleSent)
 
@@ -148,6 +191,7 @@ end
 
 
 local function sendRecordings()
+    -- TODO: check if in flight and abort?
     queueFiles()
     sendFiles()
 end

@@ -19,3 +19,5 @@ QueuedFileNames = {}
 FileNameInFlight = nil
 -- File descriptor of data file being sent
 FdInFlight = nil
+-- Buffer for responses to uploads
+UploadRecvBuffer = ''
