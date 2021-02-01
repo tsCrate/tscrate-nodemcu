@@ -19,19 +19,19 @@ end
 
 -- Restart in 5 minutes unless an AP client connects
 local function registerFlagHandler()
-        -- register 2 events:
-        -- first, a timer to delete flag and restart in 5 mins
-        -- second, cancel the timer if a user connects within 3 mins
-        local flagDelTmr = tmr.create()
-        flagDelTmr:register(3 * 60 * 1000, tmr.ALARM_SINGLE, function()
-            file.remove(resetFlag)
-            node.restart()
-        end)
+    -- register 2 events:
+    -- first, a timer to delete flag and restart in 5 mins
+    -- second, cancel the timer if a user connects within 3 mins
+    local flagDelTmr = tmr.create()
+    flagDelTmr:register(3 * 60 * 1000, tmr.ALARM_SINGLE, function()
+        file.remove(resetFlag)
+        node.restart()
+    end)
 
-        flagDelTmr:start()
-        wifi.eventmon.register(wifi.eventmon.AP_STACONNECTED, function ()
-            flagDelTmr:unregister()
-        end)
+    flagDelTmr:start()
+    wifi.eventmon.register(wifi.eventmon.AP_STACONNECTED, function ()
+        flagDelTmr:unregister()
+    end)
 end
 
 

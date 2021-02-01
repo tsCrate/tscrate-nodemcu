@@ -68,19 +68,26 @@ local function startPost(sck)
 end
 
 
+local function closeConn(sck)
+    print('close conn')
+    UploadTimeout:unregister()
+    sck:close()
+end
+
+
 local function sendNextFile(sck)
     -- Pop name, open filedesc, send file
     -- No files left
     FileNameInFlight = table.remove(QueuedFileNames)
     if not FileNameInFlight then
-        sck:close()
+        closeConn(sck)
         return nil
     end
 
     -- File doesn't exist, bail
     FdInFlight= file.open(FileNameInFlight, 'r')
     if not FdInFlight then
-        sck:close()
+        closeConn(sck)
         return nil
     end
 
@@ -107,26 +114,44 @@ end
 
 
 local function sendFiles()
-    local conn = tls.createConnection(net.TCP, 0)
+    -- TODO: NEVERMIND the following isn't true-> if a read occurs in the middle of a send, send fails. If read freq is high, no send will succeed; have to pause reads to send.
+    -- TODO: after 10 minutes or so, sends no longer connect. Make conn a global and close() and reset?
+    -- TODO: is the problem that there's no file to read, and then all the sends fail?
+    -- TODO: see log
+    -- TODO: after failure starts, tls.createConnection doesn't succeed when entered manually; reuse conn?
 
+    print(node.heap())
+
+    -- TODO: set procedure for restarting the module if call to conn:connect fails, as the TLS/net module may have failed
+    -- TODO: re-evaluate UploadTimeout and uploadInterval logic -- maybe start upload timer after last one finishes (ALARM_SEMI)
     UploadTimeout = tmr.create()
-    UploadTimeout:register(3/4 * settings.uploadInterval, tmr.ALARM_AUTO,
+    UploadTimeout:register(0.9 * settings.uploadInterval, tmr.ALARM_SINGLE,
         function()
-            conn:close()
+            print('timeout')
+            UploadConn:close()
         end
     )
     UploadTimeout:start()
 
-    conn:on("connection", sendNextFile)
+    UploadConn:on("connection",
+        function(sck)
+            print('connected')
+            sendNextFile(sck)
+        end
+    )
 
-    conn:on("sent", handleSent)
+    UploadConn:on("sent", handleSent)
 
-    conn:on("receive", handleReceive)
+    UploadConn:on("receive", handleReceive)
 
-    conn:on("reconnection", function(sck, c) print('reconn', c) end)
-    conn:on("disconnection", function(sck) print('disconn') end)
+    UploadConn:on("reconnection",
+        function(sck, c)
+            print('reconn', c)
+        end
+    )
+    UploadConn:on("disconnection", function(sck) print('disconn') end)
 
-    conn:connect(settings.serverPort, settings.serverDomain)
+    UploadConn:connect(settings.serverPort, settings.serverDomain)
 end
 
 
@@ -200,7 +225,9 @@ end
 
 local function sendRecordings()
     -- TODO: check if in flight and abort?
+    -- TODO: calculate space taken by queued files and stop recording above X KB/MB or remaining flash space
     queueFiles()
+    if not next(QueuedFileNames) then return end
     sendFiles()
 end
 

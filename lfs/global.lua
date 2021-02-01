@@ -23,3 +23,4 @@ FdInFlight = nil
 UploadRecvBuffer = ''
 -- Timer to abort upload
 UploadTimeout = nil
+UploadConn = tls.createConnection(net.TCP, 0)
