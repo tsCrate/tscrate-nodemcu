@@ -1,3 +1,4 @@
+local settings = require('settings')
 -- initialize global vars
 dofile('global.lua')
 local util = require('serverUtil')
@@ -47,16 +48,30 @@ local function startup()
         file.remove(resetFlag)
     end
 
+
     local setup = util.loadSetup()
-    if setup.confirmed and setup.key then
-        if not setupTrigger then
-            print('Client mode. Reporting to the server.')
-            LFS.startClient()
-        else
-            print('Reconfigure mode. Restarts in 3 minutes if no user connects to the access point.')
-            LFS.startServer()
-            registerFlagHandler()
-        end
+    -- Limit the number of data files to something processable
+    LFS.queueFiles()
+    local filesCapped = LFS.queuedFileCount() >= settings.maxFileCount
+
+    local startClient = setup.confirmed and setup.key and not setupTrigger and not filesCapped
+    local startRecoveryClient = setup.confirmed and setup.key and not setupTrigger and filesCapped
+    local startReconfig = setup.confirmed and setup.key and setupTrigger
+    local startSetup = not setup.confirmed or not setup.key
+
+    if startClient then
+        print('Client mode. Reporting to the server.')
+        LFS.startClient()
+    elseif startRecoveryClient then
+        print('Data file cap reached. Attempting to upload before recording more.')
+        LFS.startRecoveryClient()
+    elseif startReconfig then
+        print('Reconfigure mode. Restarts in 3 minutes if no user connects to the access point.')
+        LFS.startServer()
+        registerFlagHandler()
+    elseif startSetup then
+        print('Setup mode. Connect to the device to configure Wi-Fi and get a setup code.')
+        LFS.startServer()
     else
         print('Setup mode. Connect to the device to configure Wi-Fi and get a setup code.')
         LFS.startServer()

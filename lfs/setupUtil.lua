@@ -127,6 +127,7 @@ end
 local function requestSetup(handler)
     StatusTimer:unregister()
     file.remove('setup')
+    -- TODO: delete existing data/queued files
     SetupCodeRequested = true
 
     get(

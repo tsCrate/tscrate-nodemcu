@@ -17,4 +17,4 @@ local tslOk = tsl2561.init(4, 5) == tsl2561.TSL2561_OK
 print('tsl2561 status is ok: ', tslOk)
 
 -- Register the read function. We'll take it from here.
-node.LFS.registerReader(30000, tslRead, dataSetName)
+LFS.registerReader(30000, tslRead, dataSetName)

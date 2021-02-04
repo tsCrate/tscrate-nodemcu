@@ -7,5 +7,6 @@ return {
     serverAddr = 'https://' .. serverDomain .. ':' .. serverPort,
     uploadInterval = 60000,
     dataFilePrefix = 'data_',
-    queuedFilePrefix = 'queued_'
+    queuedFilePrefix = 'queued_',
+    maxFileCount = 50
 }

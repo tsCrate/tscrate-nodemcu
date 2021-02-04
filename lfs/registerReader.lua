@@ -40,12 +40,12 @@ local function startUploadTimer()
     if UploadTimer then return end;
 
     -- Send files that were here on startup
-    node.LFS.sendRecordings()
+    LFS.sendRecordings()
 
     UploadTimer = tmr.create()
     UploadTimer:register(settings.uploadInterval, tmr.ALARM_AUTO,
         function()
-            node.LFS.sendRecordings()
+            LFS.sendRecordings()
         end
     )
     UploadTimer:start()

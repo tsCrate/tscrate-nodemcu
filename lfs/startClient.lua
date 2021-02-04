@@ -23,7 +23,7 @@ end
 
 local function startClient()
   sntpStart()
-  node.LFS.prepareUploadConn()
+  LFS.prepareUploadConn()
 end
 
 

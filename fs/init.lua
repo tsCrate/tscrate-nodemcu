@@ -9,4 +9,5 @@ end
 node.LFS.get('_init')()
 node.LFS.startup()
 
+-- Define main to be called after client startup
 main = function() dofile('main.lua') end
