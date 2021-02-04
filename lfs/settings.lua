@@ -1,4 +1,4 @@
-local serverDomain = '192.168.1.7'
+local serverDomain = '192.168.1.8'
 local serverPort = 5001
 
 return {

@@ -23,6 +23,7 @@ end
 
 
 -- TODO: break largest code chunks into files to reduce heap use
+-- TODO: UploadConn handlers and registration can be moved to their own file to be registered once
 local function getBody()
     -- determine if body is complete
     local _, i = UploadRecvBuffer:find('\r\n\r\n')
@@ -62,6 +63,7 @@ local function startPost(sck)
     local msg = 'POST /RemoteDevices/upload-readings HTTP/1.1' ..
                 '\r\nHost: ' .. settings.serverDomain ..
                 '\r\nContent-Type: application/json' ..
+                '\r\nConnection: ' .. UploadConnHeader ..
                 '\r\nTransfer-Encoding: chunked' ..
                 '\r\n\r\n'
     sck:send(msg)
@@ -70,7 +72,8 @@ end
 
 local function closeConn(sck)
     print('close conn')
-    UploadTimeout:unregister()
+    UploadCloseTimer:unregister()
+    ConnTimeout:unregister()
     sck:close()
 end
 
@@ -82,6 +85,10 @@ local function sendNextFile(sck)
     if not FileNameInFlight then
         closeConn(sck)
         return nil
+    end
+    -- Request close by server if this is the last file
+    if not next(QueuedFileNames) then
+        UploadConnHeader = 'close'
     end
 
     -- File doesn't exist, bail
@@ -107,32 +114,40 @@ local function handleReceive(sck, data)
       handleBody(body)
       UploadRecvBuffer = ''
       file.remove(FileNameInFlight)
-      sendNextFile(sck)
+
+      local _, last = UploadRecvBuffer:find('\r\n\r\n')
+      local connClose = UploadRecvBuffer:sub(1, last):match('Connection: close')
+      if not connClose then
+        sendNextFile(sck)
+      end
     end
 
 end
 
 
 local function sendFiles()
-    -- TODO: NEVERMIND the following isn't true-> if a read occurs in the middle of a send, send fails. If read freq is high, no send will succeed; have to pause reads to send.
-    -- TODO: after 10 minutes or so, sends no longer connect. Make conn a global and close() and reset?
-    -- TODO: is the problem that there's no file to read, and then all the sends fail?
-    -- TODO: see log
-    -- TODO: after failure starts, tls.createConnection doesn't succeed when entered manually; reuse conn?
-
     print(node.heap())
 
     -- TODO: set procedure for restarting the module if call to conn:connect fails, as the TLS/net module may have failed
-    -- TODO: re-evaluate UploadTimeout and uploadInterval logic -- maybe start upload timer after last one finishes (ALARM_SEMI)
-    UploadTimeout = tmr.create()
-    UploadTimeout:register(0.9 * settings.uploadInterval, tmr.ALARM_SINGLE,
+    UploadConnHeader = 'keep-alive'
+
+    -- Timer to request connection close before the next upload event, if files are still being sent
+    UploadCloseTimer:register(0.70 * settings.uploadInterval, tmr.ALARM_SINGLE,
         function()
-            print('timeout')
+            UploadConnHeader = 'close'
+        end
+    )
+    UploadCloseTimer:start()
+
+    -- Timer to force close connection before next upload event
+    ConnTimeout:register(0.95 * settings.uploadInterval, tmr.ALARM_SINGLE,
+        function()
             UploadConn:close()
         end
     )
-    UploadTimeout:start()
+    ConnTimeout:start()
 
+    -- Handlers
     UploadConn:on("connection",
         function(sck)
             print('connected')
@@ -147,9 +162,17 @@ local function sendFiles()
     UploadConn:on("reconnection",
         function(sck, c)
             print('reconn', c)
+            UploadCloseTimer:unregister()
+            ConnTimeout:unregister()
         end
     )
-    UploadConn:on("disconnection", function(sck) print('disconn') end)
+    UploadConn:on("disconnection",
+        function(sck)
+            UploadCloseTimer:unregister()
+            ConnTimeout:unregister()
+            print('disconn')
+        end
+    )
 
     UploadConn:connect(settings.serverPort, settings.serverDomain)
 end

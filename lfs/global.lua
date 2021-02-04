@@ -22,5 +22,8 @@ FdInFlight = nil
 -- Buffer for responses to uploads
 UploadRecvBuffer = ''
 -- Timer to abort upload
-UploadTimeout = nil
+ConnTimeout = tmr.create()
+-- Timer to request connection close
+UploadCloseTimer = tmr.create()
 UploadConn = tls.createConnection(net.TCP, 0)
+UploadConnHeader = 'keep-alive'
