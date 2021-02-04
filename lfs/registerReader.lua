@@ -10,7 +10,7 @@ local function initFile(dsfilename)
     end
 
     local fd = file.open(dsfilename, 'w+')
-    fd:writeline('{\n    "key": ' .. key .. ',\n    "dataset": ' .. dsname .. ',\n    "readings": [\n')
+    fd:writeline('{\n    "key": "' .. key .. '",\n    "dataset": "' .. dsname .. '",\n    "readings": [\n')
     fd:close()
 end
 

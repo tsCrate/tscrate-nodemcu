@@ -83,7 +83,7 @@ local function sendNextFile(sck)
     -- No files left
     FileNameInFlight = table.remove(QueuedFileNames)
     if not FileNameInFlight then
-        closeConn(sck)
+        --closeConn(sck)
         return nil
     end
     -- Request close by server if this is the last file
@@ -94,7 +94,7 @@ local function sendNextFile(sck)
     -- File doesn't exist, bail
     FdInFlight= file.open(FileNameInFlight, 'r')
     if not FdInFlight then
-        closeConn(sck)
+        --closeConn(sck)
         return nil
     end
 
@@ -202,10 +202,10 @@ end
 local function appendJsonChars(fileName)
     -- Remove trailing comma
     local fdr = file.open(fileName, 'r+')
-    fdr:seek('end', -3)
+    fdr:seek('end', -2)
     local isComma = file.read(1) == ','
     if isComma then
-        fdr:seek('end', -3)
+        fdr:seek('end', -2)
         fdr:write(' ')
     end
     fdr:close()
