@@ -12,9 +12,11 @@ local function writeResetFlag()
     file.close()
 
     local delFlagTmr = tmr.create()
-    delFlagTmr:register(5000, tmr.ALARM_SINGLE, function()
-        file.remove(resetFlag)
-    end)
+    delFlagTmr:register(5000, tmr.ALARM_SINGLE,
+        function()
+            file.remove(resetFlag)
+        end
+    )
     delFlagTmr:start()
 end
 

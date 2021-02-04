@@ -12,30 +12,30 @@ end
 
 local function sntpStart()
     sntp.sync(sntpServers, sntpComplete,
-      function()
-        print("SNTP failed. Time not set. Retrying in 10 seconds.")
-        local sntpTmr = tmr.create()
-        sntpTmr:register(10000, tmr.ALARM_SINGLE, sntpStart)
-      end
-    )
+        function()
+            print("SNTP failed. Time not set. Retrying in 10 seconds.")
+            local sntpTmr = tmr.create()
+            sntpTmr:register(10000, tmr.ALARM_SINGLE, sntpStart)
+        end
+      )
 end
 
 
 local function startClient()
-  sntpStart()
-  LFS.prepareUploadConn()
+    sntpStart()
+    LFS.prepareUploadConn()
 end
 
 
 if wifi.sta.status() == wifi.STA_GOTIP then
-  startClient()
+    startClient()
 else
-  wifi.eventmon.register(wifi.eventmon.STA_GOT_IP,
-    function ()
-      print('got ip')
-      -- TODO: test wifi drop
-      wifi.eventmon.unregister(wifi.eventmon.STA_GOT_IP)
-      startClient()
-    end
-  )
+    wifi.eventmon.register(wifi.eventmon.STA_GOT_IP,
+        function ()
+            print('got ip')
+            -- TODO: test wifi drop
+            wifi.eventmon.unregister(wifi.eventmon.STA_GOT_IP)
+            startClient()
+        end
+    )
 end

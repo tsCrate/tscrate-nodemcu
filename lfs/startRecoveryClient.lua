@@ -36,13 +36,13 @@ end
 
 
 if wifi.sta.status() == wifi.STA_GOTIP then
-  startRecoveryClient()
+    startRecoveryClient()
 else
-  wifi.eventmon.register(wifi.eventmon.STA_GOT_IP,
-    function ()
-      print('got ip')
-      wifi.eventmon.unregister(wifi.eventmon.STA_GOT_IP)
-      startRecoveryClient()
-    end
-  )
+    wifi.eventmon.register(wifi.eventmon.STA_GOT_IP,
+        function ()
+            print('got ip')
+            wifi.eventmon.unregister(wifi.eventmon.STA_GOT_IP)
+            startRecoveryClient()
+        end
+    )
 end

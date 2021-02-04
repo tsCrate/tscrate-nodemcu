@@ -94,21 +94,21 @@ end
 local function handleReceive(sck, data)
     if data then UploadRecvBuffer = UploadRecvBuffer .. data end
     if not UploadRecvBuffer:match('Transfer%-Encoding: chunked') then
-      print('Response must be chunked')
-      return
+        print('Response must be chunked')
+        return
     end
 
     local body = getBody()
     if body then
-      handleBody(body)
-      UploadRecvBuffer = ''
-      file.remove(FileNameInFlight)
+        handleBody(body)
+        UploadRecvBuffer = ''
+        file.remove(FileNameInFlight)
 
-      local _, last = UploadRecvBuffer:find('\r\n\r\n')
-      local connClose = UploadRecvBuffer:sub(1, last):match('Connection: close')
-      if not connClose then
-        sendNextFile(sck)
-      end
+        local _, last = UploadRecvBuffer:find('\r\n\r\n')
+        local connClose = UploadRecvBuffer:sub(1, last):match('Connection: close')
+        if not connClose then
+            sendNextFile(sck)
+        end
     end
 
 end
