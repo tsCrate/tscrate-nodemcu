@@ -124,10 +124,22 @@ local function handleSetupCode(setupString)
 end
 
 
+local function deleteDataFiles()
+    for k,v in pairs(file.list('^' .. settings.queuedFilePrefix)) do
+        file.remove(k)
+    end
+
+    for k,v in pairs(file.list('^' .. settings.dataFilePrefix)) do
+        file.remove(k)
+    end
+end
+
+
 local function requestSetup(handler)
     StatusTimer:unregister()
     file.remove('setup')
-    -- TODO: delete existing data/queued files
+    deleteDataFiles()
+
     SetupCodeRequested = true
 
     get(
