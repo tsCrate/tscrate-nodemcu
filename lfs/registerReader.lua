@@ -20,7 +20,6 @@ local function record(dsfilename, readFunc)
         initFile(dsfilename)
     end
 
-    print('calling readfunc')
     local val, unit, error = readFunc()
 
     if not ((unit == nil) or (type(unit) == 'string')) then

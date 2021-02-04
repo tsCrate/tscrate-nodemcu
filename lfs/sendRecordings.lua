@@ -2,7 +2,7 @@ local settings = require('settings')
 
 
 local function sendFiles()
-    print(node.heap())
+    print('Attempting to send data')
 
     -- TODO: set procedure for restarting the module if call to conn:connect fails, as the TLS/net module may have failed
     UploadConnHeader = 'keep-alive'

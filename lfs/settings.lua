@@ -8,5 +8,6 @@ return {
     uploadInterval = 60000,
     dataFilePrefix = 'data_',
     queuedFilePrefix = 'queued_',
-    maxFileCount = 50
+    maxFileCount = 50,
+    sntpInterval = 1800000
 }

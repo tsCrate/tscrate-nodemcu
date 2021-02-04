@@ -1,11 +1,25 @@
+local settings = require('settings')
 local sntpServers = { 'time1.google.com', 'time2.google.com', 'time3.google.com', 'time4.google.com' }
 
 wifi.setmode(wifi.STATION, true)
 wifi.sta.autoconnect(1)
 
 
+local function setSntpTimer()
+    print('time sync')
+    local sntpTimer = tmr.create()
+    sntpTimer:register(settings.sntpInterval, tmr.ALARM_SINGLE,
+        function()
+            sntp.sync(sntpServers, setSntpTimer)
+        end
+    )
+    sntpTimer:start()
+end
+
+
 local function sntpComplete()
     print('SNTP complete. Starting main.')
+    setSntpTimer()
     main()
 end
 

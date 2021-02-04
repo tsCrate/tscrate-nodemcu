@@ -128,7 +128,7 @@ local function registerHandlers()
 
     UploadConn:on("reconnection",
         function(sck, c)
-            print('reconn', c)
+            print('Reconnection event', c)
             UploadCloseTimer:unregister()
             ConnTimeout:unregister()
         end
@@ -138,7 +138,7 @@ local function registerHandlers()
         function(sck)
             UploadCloseTimer:unregister()
             ConnTimeout:unregister()
-            print('disconn')
+            print('Disconnection event')
         end
     )
 end

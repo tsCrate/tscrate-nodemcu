@@ -9,14 +9,14 @@ local function sendFiles()
 
     UploadConn:on("reconnection",
         function(sck, c)
-            print('reconn', c)
+            print('Reconnection event', c)
             node.restart()
         end
     )
 
     UploadConn:on("disconnection",
         function(sck)
-            print('disconn')
+            print('Disconnection event')
             node.restart()
         end
     )
