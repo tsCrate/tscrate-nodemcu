@@ -21,17 +21,18 @@ local function sendFiles()
         end
     )
 
+    -- TODO: set restart timeout to handle a server not replying (120s)
     UploadConn:connect(settings.serverPort, settings.serverDomain)
 end
 
 
 local function startRecoveryClient()
-  LFS.prepareUploadConn()
+    LFS.prepareUploadConn()
 
-  LFS.queueFiles()
-  if not next(QueuedFileNames) then node.restart() end
+    LFS.queueFiles()
+    if not next(QueuedFileNames) then node.restart() end
 
-  sendFiles()
+    sendFiles()
 end
 
 

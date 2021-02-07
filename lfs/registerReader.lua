@@ -26,7 +26,11 @@ local function record(dsfilename, readFunc)
         error('Unit must be nil or string')
     end
 
-    local ts = rtctime.get()
+    local sec, microsec = rtctime.get()
+    -- Floor microsecs which can only reach 1M
+    -- Anyting over 2^31 floors to 2^31 for nodemcu Lua51 builds
+    -- because they use 64-bit doubles but only 32-bit ints.
+    local ts = sec * 1000 + math.floor((microsec / 1000) + 0.5)
 
     local fd = file.open(dsfilename, 'a+')
     fd:writeline(sjson.encode({ts = ts, u = unit, val = val}) .. ',')
