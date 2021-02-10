@@ -1,24 +1,23 @@
 local util = require("serverUtil")
 local settings = require("settings")
 
-Queue = {}
-RequestInFlight = false
-StatusTimer = tmr.create()
-
-local writeSetup, setupLinked, handleStatus, requestSetup, handleSetupCode,
-      getStatus, startStatusChecks, sendRequest
+local function writeSetup(setup)
+    local fd = file.open('setup', 'w+')
+    fd:writeline(util.encodeJson(setup))
+    fd:close()
+end
 
 
 local function processQueue()
     if not RequestInFlight then
-        local callback = table.remove(Queue, 1)
+        local callback = table.remove(RequestQueue, 1)
         if callback then callback() end
     end
 end
 
 local function request(url, method, headers, body, callback)
     table.insert(
-        Queue,
+        RequestQueue,
         function()
             http.request(
                 url,
@@ -58,7 +57,6 @@ end
 
 
 local function handleStatus(code, data)
-    print (code, data)
 
     if (code < 0) then
         -- TODO add status request failed to device statuses
@@ -88,15 +86,7 @@ local function handleStatus(code, data)
 end
 
 
-local function writeSetup(setup)
-    local fd = file.open('setup', 'w+')
-    fd:writeline(util.encodeJson(setup))
-    fd:close()
-end
-
-
 local function getStatus()
-    print('in get status')
     local setup = util.loadSetup()
     if not setup.setupCode then return end
 
@@ -123,8 +113,7 @@ end
 
 
 local function handleSetupCode(setupString)
-    print('in handle setup')
-    print('setup string: ' .. setupString)
+    print('setup: ' .. setupString)
     SetupCodeExpired = false
     SetupCodeRequested = false
 
@@ -135,10 +124,22 @@ local function handleSetupCode(setupString)
 end
 
 
+local function deleteDataFiles()
+    for k,v in pairs(file.list('^' .. settings.queuedFilePrefix)) do
+        file.remove(k)
+    end
+
+    for k,v in pairs(file.list('^' .. settings.dataFilePrefix)) do
+        file.remove(k)
+    end
+end
+
+
 local function requestSetup(handler)
-    print ('in get req setup')
     StatusTimer:unregister()
     file.remove('setup')
+    deleteDataFiles()
+
     SetupCodeRequested = true
 
     get(
@@ -148,7 +149,6 @@ local function requestSetup(handler)
             if (code < 0) then
                 handler(code, data)
             else
-                print(code, data)
                 handleSetupCode(data)
                 handler(code, data)
             end

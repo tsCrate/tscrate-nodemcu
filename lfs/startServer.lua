@@ -1,18 +1,8 @@
-SetupReqFailed = false
-SetupCodeExpired = false
-ServerUnreachable = false
-SetupCodeRequested = false
-
+local util = require("serverUtil")
 local setupUtil = require('setupUtil')
 
 -- web clients connected to the AP
 local clients = {}
--- moduleId, passphrase, etc.
-local moduleSettings = {}
--- status of server connection
-local status = "Idle"
-
-local util = require("serverUtil")
 
 
 -- remove client data to be garbage collected
@@ -66,6 +56,7 @@ local wifiStates = {
     [wifi.STA_GOTIP] = "WiFi connected: "
 }
 
+
 local function getStatusMsg ()
     local wifiCode = wifi.sta.status()
     local ssid = wifi.sta.getconfig()
@@ -116,15 +107,17 @@ local function serveFile(sock, resource)
     local contEnc = ''
     local fileExt = util.getFileExt(resource)
     if fileExt == '.gz' then contEnc = '\r\nContent-Encoding: gzip' end
+
     local contType = ''
     if fileExt == '.css' then contType = '\r\nContent-Type: text/css' end
+
     sock:send('HTTP/1.0 200 OK' .. contType .. contEnc .. '\r\n\r\n')
 end
 
 
 local function postWifiConnect(sock)
     local reqBody = util.getBody(clients[sock].rcvBuf)
-    -- if body not nil, handle and cleanup
+    -- if body not nil, handle and cleanup; else wait for the body
     if reqBody then
         local reqVals = util.decodeJson(reqBody)
         local station_cfg = {}
@@ -134,16 +127,12 @@ local function postWifiConnect(sock)
         wifi.sta.config(station_cfg)
 
         get200(sock)
-    -- else wait for the rest of the body
-    else
     end
 end
 
 
 local function getSetupCode(sock)
-    print ('in getSetup')
     setupUtil.requestSetup(function (code, data)
-        print(code, data)
         get200(sock)
         if (code < 0) then
             SetupReqFailed = true
@@ -156,10 +145,10 @@ end
 
 -- request controllers
 local controllers = {
-  ['check-status'] = getDeviceStatus,
-  ['wifi-connect'] = postWifiConnect,
-  ['get-setup-code'] = getSetupCode,
-  [''] = function (sock) serveFile(sock, 'index.html') end
+    ['check-status'] = getDeviceStatus,
+    ['wifi-connect'] = postWifiConnect,
+    ['get-setup-code'] = getSetupCode,
+    [''] = function (sock) serveFile(sock, 'index.html') end
 }
 
 
@@ -194,10 +183,12 @@ end
 local function handleConn(newSock)
     clients[newSock] = {}
     clients[newSock].rcvBuf= ""
-    newSock:on("disconnection", function(sock, err)
-        print('client disconn')
-        closeClient(sock)
-    end)
+    newSock:on("disconnection",
+        function(sock, err)
+            print('User disconnected')
+            closeClient(sock)
+        end
+    )
     newSock:on("receive", handleReceive)
 end
 

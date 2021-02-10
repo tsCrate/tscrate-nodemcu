@@ -4,7 +4,7 @@ local function decodeJson(encodedJson)
     if ok then
         return (decodedJson)
     else
-        print("Decoding failed: " .. encodedJson)
+        print("Decoding failed: ", encodedJson)
     end
 end
 
@@ -14,7 +14,7 @@ local function encodeJson(tableToEncode)
     if ok then
         return(encodedJson)
     else
-        print("Encoding failed")
+        print("Encoding failed: ", encodedJson)
     end
 end
 
