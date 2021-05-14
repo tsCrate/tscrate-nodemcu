@@ -1,10 +1,12 @@
-local serverDomain = '192.168.1.8'
-local serverPort = 5001
+local serverDomain = 'tscrate.com'
+local serverPort = 443
 
 return {
     serverDomain = serverDomain,
     serverPort = 5001,
     serverAddr = 'https://' .. serverDomain .. ':' .. serverPort,
+    ssid = "DA".. tostring(node.chipid()),
+    password = 'data app',
     uploadInterval = 60000,
     dataFilePrefix = 'data_',
     queuedFilePrefix = 'queued_',

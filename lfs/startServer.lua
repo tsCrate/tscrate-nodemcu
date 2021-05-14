@@ -1,5 +1,6 @@
 local util = require("serverUtil")
 local setupUtil = require('setupUtil')
+local settings = require('settings')
 
 -- web clients connected to the AP
 local clients = {}
@@ -69,10 +70,10 @@ local function getStatusMsg ()
         if SetupCodeExpired then
             setupMsg = setupMsg .. 'Code expired. A new code can be requested.'
         else
-            setupMsg = setupMsg .. 'Code to enter at DataApp.com: ' .. setup.setupCode:sub(1, 3) .. ' ' .. setup.setupCode:sub(4)
+            setupMsg = setupMsg .. 'Code to enter at tsCrate.com: ' .. setup.setupCode:sub(1, 3) .. ' ' .. setup.setupCode:sub(4)
         end
     elseif setup.confirmed then
-        setupMsg = setupMsg .. 'Device linked to an account at DataApp.com'
+        setupMsg = setupMsg .. 'Device linked to an account at tsCrate.com'
     elseif SetupCodeRequested then
         setupMsg = setupMsg .. 'Requesting setup code...'
     end
@@ -207,8 +208,8 @@ local function startServer()
     -- configure wifi
     wifi.setmode(wifi.STATIONAP, false);
     wifi.ap.config({
-        ssid="DA".. tostring(node.chipid()),
-        pwd="data app"
+        ssid=settings.ssid,
+        pwd=settings.password
     })
     wifi.ap.dhcp.start()
     return srv
