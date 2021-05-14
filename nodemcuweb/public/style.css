@@ -2,6 +2,15 @@ html {
     font-family: "Open Sans", sans-serif;
 }
 
+body {
+    text-align: center;
+}
+
+h4 {
+    margin-top: 2em;
+    margin-bottom: 3em;
+}
+
 @media (min-height: 300px) {
     .header {
         height: 100px;
@@ -18,12 +27,7 @@ html {
     white-space: pre-wrap;
 }
 
-.header {
-    text-align: center;
-}
-
 p {
-    text-align: center;
     padding: 10px 20px 10px 20px;
 }
 
@@ -50,7 +54,7 @@ button:disabled {
     background: gray;
 }
 
-.centerLine {
+.spacedLine {
     display: block;
     margin: auto;
     margin-top: 10px;
@@ -62,4 +66,8 @@ button:disabled {
         margin-top: 20px;
         margin-bottom: 20px;
     }
+}
+
+.requestSetup {
+    margin-top: 3em;
 }

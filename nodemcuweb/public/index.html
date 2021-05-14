@@ -4,33 +4,36 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Data App</title>
+  <title>tsCrate Device Setup</title>
   <link rel="stylesheet" type="text/css" href="style.css">
   <link rel="stylesheet" type="text/css" href="dialog-polyfill.css">
 </head>
 
 <body>
 
-  <h1 class="header">Data App</h1>
+  <div>
+    <h4>
+      <img src="/favicon.ico"><br>
+      tsCrate Remote Device Setup
+    </h4>
+  </div>
 
-  <p text>
-    Wi-Fi login <br>
-    (the local Wi-Fi network)
-  </p>
+  <label for="ssid">Wi-Fi login (local Wi-Fi)</label>
+  <input placeholder="Name (SSID)" id="ssid" class="spacedLine" list="ssids">
+  <datalist id="ssids"></datalist>
 
-  <input placeholder="Name (SSID)" id="ssid" class="centerLine">
-  <input type="password" id="password" placeholder="Password" class="centerLine">
+  <input type="password" id="password" placeholder="Password" class="spacedLine">
 
-  <button onclick="connectWifi(); this.blur();" class="centerLine">Connect Wi-Fi</button>
+  <button onclick="connectWifi(); this.blur();" class="spacedLine">Connect Wi-Fi</button>
   <p id="wifiStatus"></p>
 
-  <button onclick="openSetupDialog(); this.blur();" id="requestSetupButton" class="centerLine" disabled>Request Setup</button>
+  <button onclick="openSetupDialog(); this.blur();" id="requestSetupButton" class="spacedLine requestSetup" disabled>Request Setup</button>
   <p id="setupStatus"></p>
 
   <dialog id="requestSetupDialog">
-    <div class="centerLine">This will replace any existing setup</div>
-    <button onclick="closeDialog()" class="centerLine" id="cancelButton">Cancel</button>
-    <button onclick="confirmRequestSetup()" class="centerLine">Confirm</button>
+    <div class="spacedLine">This will replace any existing setup</div>
+    <button onclick="closeDialog()" class="spacedLine" id="cancelButton">Cancel</button>
+    <button onclick="confirmRequestSetup()" class="spacedLine">Confirm</button>
   </dialog>
 
 
@@ -100,11 +103,20 @@
       document.getElementById("wifiStatus").textContent = deviceStatus.wifiStatus;
       document.getElementById("setupStatus").textContent = deviceStatus.setupStatus;
       document.getElementById("requestSetupButton").disabled = !deviceStatus.hasIp;
+      deviceStatus.ssids.forEach(ssid => {
+        // Populate ssids
+        let ssids = document.getElementById("ssids");
+        if (!Array.from(ssids.options).find(opt => opt.value === ssid)) {
+          let option = document.createElement('option');
+          option.value = ssid;
+          ssids.appendChild(option);
+        }
+      });
     }
 
     function handleError(err) {
       document.getElementById("wifiStatus").textContent = 'Not connected to device';
-      document.getElementById("setupStatus").textContent = '';
+      //document.getElementById("setupStatus").textContent = '';
       document.getElementById("requestSetupButton").disabled = true;
     }
 

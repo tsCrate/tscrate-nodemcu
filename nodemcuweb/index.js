@@ -17,7 +17,13 @@ app.post('/get-setup-code', (req, res) => {
 })
 
 app.get('/check-status', (req, res) => {
-  res.send('Status update ' + Math.floor(Math.random() * Math.floor(100)));
+  //res.send('Status update ' + Math.floor(Math.random() * Math.floor(100)));
+  res.send(JSON.stringify({
+    wifiStatus: 'Wifi status here',
+    setupStatus: 'Setup status here',
+    hasIp: false,
+    ssids: ['wifi1', 'wifi 2', 'looong wifi name']
+  }))
 })
 
 app.listen(port, () => {
