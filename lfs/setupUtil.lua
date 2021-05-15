@@ -92,7 +92,7 @@ local function getStatus()
 
     -- don't request status if there's no wifi
     if wifi.sta.status() ~= wifi.STA_GOTIP then
-        StatusTimer:start()
+        StatusTimer:start(true)
         return
     end
 

@@ -59,6 +59,12 @@ local wifiStates = {
 
 
 local function getStatusMsg ()
+    local ssids = {}
+    if file.open(settings.wifiApFileName, 'r') then
+        ssids = util.decodeJson(file.readline())
+        file.close()
+    end
+
     local wifiCode = wifi.sta.status()
     local ssid = wifi.sta.getconfig()
     local wifiMsg = wifiStates[wifiCode] .. ((wifiCode ~= wifi.STA_IDLE and ssid) or '')
@@ -82,11 +88,11 @@ local function getStatusMsg ()
         setupMsg = setupMsg .. '\r\nSetup request failed'
     end
 
-    -- return wifiMsg .. '\r\n' .. setupMsg
     return util.encodeJson({
         hasIp = wifiCode == wifi.STA_GOTIP,
         wifiStatus = wifiMsg,
-        setupStatus = setupMsg
+        setupStatus = setupMsg,
+        ssids = ssids
     })
 end
 
@@ -103,6 +109,7 @@ local function serveFile(sock, resource)
         get404(sock)
         return
     end
+    -- After headers sent, send client's file
     sock:on("sent", function(s) sendFile(s) end)
 
     local contEnc = ''
@@ -194,6 +201,35 @@ local function handleConn(newSock)
 end
 
 
+-- Write wifi access points to a file in JSON
+local function writeAps(apTable)
+    local apNames = {}
+    for k in pairs(apTable) do
+        table.insert(apNames, k)
+    end
+    file.open(settings.wifiApFileName, 'w+')
+    file.writeline(util.encodeJson(apNames))
+    file.close()
+end
+
+
+-- Get wifi APs if in stationAP mode
+local function getWifiAps()
+    if wifi.getmode() == wifi.STATIONAP then
+        wifi.sta.getap(writeAps)
+    end
+end
+
+
+-- Populate available wifi access points
+local function populateWifiAps()
+    getWifiAps();
+    WifiApsTimer:unregister()
+    WifiApsTimer:register(15000, tmr.ALARM_AUTO, getWifiAps)
+    WifiApsTimer:unregister()
+end
+
+
 -- setup server and enter AP mode
 local function startServer()
     local setup = util.loadSetup()
@@ -212,6 +248,9 @@ local function startServer()
         pwd=settings.password
     })
     wifi.ap.dhcp.start()
+
+    populateWifiAps()
+
     return srv
 end
 

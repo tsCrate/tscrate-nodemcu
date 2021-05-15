@@ -6,6 +6,7 @@ RequestQueue = {}
 RequestInFlight = false
 -- Setup server timer for status requests to API
 StatusTimer = tmr.create()
+WifiApsTimer = tmr.create()
 
 -- Setup server states
 SetupReqFailed = false

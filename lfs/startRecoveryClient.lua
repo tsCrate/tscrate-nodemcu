@@ -1,3 +1,4 @@
+-- This is a recovery client that will only attempt to upload files, not record new values
 local settings = require('settings')
 
 wifi.setmode(wifi.STATION, true)
@@ -7,6 +8,7 @@ wifi.sta.autoconnect(1)
 local function sendFiles()
     UploadConnHeader = 'keep-alive'
 
+    -- Restart if conn fails
     UploadConn:on("reconnection",
         function(sck, c)
             print('Reconnection event', c)
@@ -14,6 +16,8 @@ local function sendFiles()
         end
     )
 
+    -- Connection will be closed by prepareUploadConn after all files are sent
+    -- Restart after files have been sent
     UploadConn:on("disconnection",
         function(sck)
             print('Disconnection event')
