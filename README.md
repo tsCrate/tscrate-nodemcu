@@ -12,6 +12,9 @@ Server mode provides a simple setup process to connect a device.
 7. The user enters the code at tsCrate.com
 9. The device switches to client mode on a successful setup
 
+https://user-images.githubusercontent.com/10565441/118840445-a2b69280-b884-11eb-9109-eeed82fe1553.mp4
+
+
 ### Device Client
 The client mode reports to tsCrate.com after initialization. A simple API is exposed for users to specify how and when values should be recorded.
 ```lua
