@@ -1,0 +1,73 @@
+html {
+    font-family: "Open Sans", sans-serif;
+}
+
+body {
+    text-align: center;
+}
+
+h4 {
+    margin-top: 2em;
+    margin-bottom: 3em;
+}
+
+@media (min-height: 300px) {
+    .header {
+        height: 100px;
+    }
+}
+
+@media (min-height: 300px) {
+    body {
+        font-size: 1.1em;
+    }
+}
+
+#status {
+    white-space: pre-wrap;
+}
+
+p {
+    padding: 10px 20px 10px 20px;
+}
+
+input {
+    font-size: 1.0em;
+}
+
+button {
+    -webkit-border-radius: 11;
+    -moz-border-radius: 11;
+    border-radius: 11px;
+    border: none;
+    font-size: 1.0em;
+    color: #000000;
+    background: #52aed9;
+    padding: 10px 20px 10px 20px;
+}
+
+button:hover {
+    background: #89c5e0;
+}
+
+button:disabled {
+    background: gray;
+}
+
+.spacedLine {
+    display: block;
+    margin: auto;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+@media (min-height: 300px) {
+    .centerLine {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+}
+
+.requestSetup {
+    margin-top: 3em;
+}

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>tsCrate Device Setup</title>
+  <script src="dialog-polyfill.js"></script>
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="stylesheet" type="text/css" href="dialog-polyfill.css">
+</head>
+
+<body>
+
+  <div>
+    <h4>
+      <img src="/favicon.ico"><br>
+      tsCrate Remote Device Setup
+    </h4>
+  </div>
+
+  <label for="ssid">Wi-Fi login (local Wi-Fi)</label>
+  <input placeholder="Name (SSID)" id="ssid" class="spacedLine" list="ssids">
+  <datalist id="ssids"></datalist>
+
+  <input type="password" id="password" placeholder="Password" class="spacedLine">
+
+  <button onclick="connectWifi(); this.blur();" class="spacedLine">Connect Wi-Fi</button>
+  <p id="wifiStatus"></p>
+
+  <button onclick="openSetupDialog(); this.blur();" id="requestSetupButton" class="spacedLine requestSetup" disabled>Request Setup</button>
+  <p id="setupStatus"></p>
+
+  <dialog id="requestSetupDialog">
+    <div class="spacedLine">This will replace any existing setup</div>
+    <button onclick="closeDialog()" class="spacedLine" id="cancelButton">Cancel</button>
+    <button onclick="confirmRequestSetup()" class="spacedLine">Confirm</button>
+  </dialog>
+
+
+  <!-------------------------------- Scripts -------------------------------->
+  <script>
+    // check status for server and Wi-Fi
+    let checkInterval = 1000;
+    let confirmRequestDialog = document.getElementById('requestSetupDialog');
+    let cancelButton = document.getElementById('cancelButton');
+    dialogPolyfill.registerDialog(confirmRequestDialog);
+
+    checkStatus();
+
+    function openSetupDialog() {
+      confirmRequestDialog.showModal();
+      cancelButton.blur();
+    }
+
+    function confirmRequestSetup() {
+      confirmRequestDialog.close();
+      document.getElementById("setupStatus").textContent = 'Requesting setup code...';
+
+      fetch('get-setup-code', {
+        method: 'POST',
+      })
+        .catch(handleError)
+    }
+
+
+    function closeDialog() {
+      confirmRequestDialog.close();
+    }
+
+
+    async function checkStatus() {
+      let nextCheck = () => setTimeout(() => {
+        checkStatus();
+      }, checkInterval)
+
+      fetch('/check-status', {
+        method: 'GET',
+      })
+        .then(handleStatusReponse)
+        .catch(handleError)
+        .finally(nextCheck);
+    }
+
+
+    async function connectWifi() {
+      let ssid = document.getElementById("ssid").value;
+      let pwd = document.getElementById("password").value;
+
+      // Default options are marked with *
+      fetch('/wifi-connect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ ssid: ssid, pwd: pwd })
+      })
+        .catch(handleError);
+    };
+
+    async function handleStatusReponse(response) {
+      deviceStatus = JSON.parse(await response.text());
+      document.getElementById("wifiStatus").textContent = deviceStatus.wifiStatus;
+      document.getElementById("setupStatus").textContent = deviceStatus.setupStatus;
+      document.getElementById("requestSetupButton").disabled = !deviceStatus.hasIp;
+      deviceStatus.ssids.forEach(ssid => {
+        // Populate ssids
+        let ssids = document.getElementById("ssids");
+        if (!Array.from(ssids.options).find(opt => opt.value === ssid)) {
+          let option = document.createElement('option');
+          option.value = ssid;
+          ssids.appendChild(option);
+        }
+      });
+    }
+
+    function handleError(err) {
+      document.getElementById("wifiStatus").textContent = 'Not connected to device';
+      //document.getElementById("setupStatus").textContent = '';
+      document.getElementById("requestSetupButton").disabled = true;
+    }
+
+  </script>
+
+</body>
+
+</html>
