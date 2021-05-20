@@ -5,7 +5,7 @@ return {
     serverDomain = serverDomain,
     serverPort = serverPort,
     serverAddr = 'https://' .. serverDomain .. ':' .. serverPort,
-    ssid = "DA".. tostring(node.chipid()),
+    ssid = "tsCrate".. tostring(node.chipid()),
     password = 'data app',
     uploadInterval = 60000,
     dataFilePrefix = 'data_',

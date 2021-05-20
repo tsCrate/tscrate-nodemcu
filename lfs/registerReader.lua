@@ -20,10 +20,14 @@ local function record(dsfilename, readFunc)
         initFile(dsfilename)
     end
 
-    local val, unit, error = readFunc()
+    local val, unit, err = readFunc()
 
     if not ((unit == nil) or (type(unit) == 'string')) then
         error('Unit must be nil or string')
+    end
+
+    if not err then
+        print(err)
     end
 
     local sec, microsec = rtctime.get()
@@ -67,8 +71,7 @@ local function registerReader()
         initFile(dsfilename)
     end
 
-    --[[ startup upload timer before creating any new files
-    (flush any existing files) ]]
+    -- Start upload timer before creating any new files (flush any existing files)
     startUploadTimer()
 
     -- record now, and register to record later
