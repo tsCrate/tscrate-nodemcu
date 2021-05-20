@@ -21,6 +21,9 @@ The client mode reports to tsCrate.com after initialization. A simple API is exp
 LFS.registerReader(readInterval, readFunction, datasetName)
 ```
 
+### User Code
+Code in main.lua will be executed after initialization. Any hardware configuration and reader registration can be placed in here. This repository includes a sample main.lua file in the output directory for reference.
+
 ## Firmware Requirements
 The following are required in user_config.h and user_modules.h for firmware builds (along with any modules required to communicate with connected hardware):
 
@@ -37,3 +40,5 @@ user_modules.h
 #define LUA_USE_MODULES_SJSON
 #define LUA_USE_MODULES_SNTP
 ```
+
+For tips on building and flashing firmware and loading files see https://nodemcu.readthedocs.io/en/release/getting-started/
